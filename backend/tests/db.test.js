@@ -13,12 +13,13 @@ afterAll((done) => {
 
 test("Insert and retrieve a users row", (done) => {
   const user = {
-    user_id: Date.now(),
+    id: Date.now(),
     health_goal: "lose weight",
     dietary_preferences: "vegan",
     age: 28,
     weight_kg: 70,
-    height_mtrs: 175,
+    height_feet: 5,
+    height_inches: 7,
     gender: "female",
     activity: "moderate",
     calorie_goal: 2000,
@@ -27,14 +28,15 @@ test("Insert and retrieve a users row", (done) => {
     fat_goal: 90,
   };
   db.run(
-    `INSERT INTO users (user_id, health_goal, dietary_preferences, age, weight_kg, height_mtrs, gender, activity, calorie_goal, protein_goal, carb_goal, fat_goal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO users (id, health_goal, dietary_preferences, age, weight_kg, height_feet, height_inches, gender, activity, calorie_goal, protein_goal, carb_goal, fat_goal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      user.user_id,
+      user.id,
       user.health_goal,
       user.dietary_preferences,
       user.age,
       user.weight_kg,
-      user.height_mtrs,
+      user.height_feet,
+      user.height_inches,
       user.gender,
       user.activity,
       user.calorie_goal,
@@ -43,16 +45,20 @@ test("Insert and retrieve a users row", (done) => {
       user.fat_goal,
     ],
     function (err) {
-      expect(err).toBeNull();
-      db.get(
-        `SELECT * FROM users WHERE user_id = ?`,
-        [user.user_id],
-        (err, row) => {
-          expect(err).toBeNull();
+      if (err) return done(err);
+      db.get(`SELECT * FROM users WHERE id = ?`, [user.id], (err, row) => {
+        if (err) return done(err);
+        try {
           expect(row).toBeDefined();
-          db.run(`DELETE FROM users WHERE user_id = ?`, [user.user_id], done);
+          // Ensure columns have the inserted data
+          expect(row.health_goal).toBe(user.health_goal);
+          expect(row.age).toBe(user.age);
+          expect(row.weight_kg).toBe(user.weight_kg);
+        } catch (e) {
+          return done(e);
         }
-      );
+        db.run(`DELETE FROM users WHERE id = ?`, [user.id], done);
+      });
     }
   );
 });
@@ -65,13 +71,18 @@ test("Insert and retrieve a users_auth row", (done) => {
     `INSERT INTO users_auth (user_id, username, password) VALUES (?, ?, ?)`,
     [testUserId, testUsername, testPassword],
     function (err) {
-      expect(err).toBeNull();
+      if (err) return done(err);
       db.get(
         `SELECT * FROM users_auth WHERE user_id = ?`,
         [testUserId],
         (err, row) => {
-          expect(err).toBeNull();
-          expect(row).toBeDefined();
+          if (err) return done(err);
+          try {
+            expect(row.username).toBe(testUsername);
+            expect(row.password).toBe(testPassword);
+          } catch (e) {
+            return done(e);
+          }
           db.run(
             `DELETE FROM users_auth WHERE user_id = ?`,
             [testUserId],
@@ -85,7 +96,7 @@ test("Insert and retrieve a users_auth row", (done) => {
 
 test("Insert and retrieve a food_items row", (done) => {
   const item = {
-    item_id: 800,
+    id: 800,
     name: "banana",
     calories: 105,
     protein: 1.3,
@@ -94,9 +105,9 @@ test("Insert and retrieve a food_items row", (done) => {
     sugars: 14,
   };
   db.run(
-    `INSERT INTO food_items (item_id, name, calories, protein, carbs, fats, sugars) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO food_items (id, name, calories, protein, carbs, fats, sugars) VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
-      item.item_id,
+      item.id,
       item.name,
       item.calories,
       item.protein,
@@ -105,48 +116,46 @@ test("Insert and retrieve a food_items row", (done) => {
       item.sugars,
     ],
     function (err) {
-      expect(err).toBeNull();
-      db.get(
-        `SELECT * FROM food_items WHERE item_id = ?`,
-        [item.item_id],
-        (err, row) => {
-          expect(err).toBeNull();
+      if (err) return done(err);
+      db.get(`SELECT * FROM food_items WHERE id = ?`, [item.id], (err, row) => {
+        if (err) return done(err);
+        try {
           expect(row).toBeDefined();
-          db.run(
-            `DELETE FROM food_items WHERE item_id = ?`,
-            [item.item_id],
-            done
-          );
+          expect(row.id).toBe(item.id);
+        } catch (e) {
+          return done(e);
         }
-      );
+        db.run(`DELETE FROM food_items WHERE id = ?`, [item.id], done);
+      });
     }
   );
 });
 
 test("Insert and retrieve a consumption_logs row", (done) => {
   const log = {
-    log_id: Date.now(),
+    id: Date.now(),
     user_id: Date.now(),
-    food_id: Date.now(),
+    item_id: Date.now(),
     servings: 2,
     date_logged: "6/25/2025",
   };
   db.run(
-    `INSERT INTO consumption_logs (log_id, user_id, food_id, servings, date_logged) VALUES (?, ?, ?, ?, ?)`,
-    [log.log_id, log.user_id, log.food_id, log.servings, log.date_logged],
+    `INSERT INTO consumption_logs (id, user_id, item_id, servings, date_logged) VALUES (?, ?, ?, ?, ?)`,
+    [log.id, log.user_id, log.item_id, log.servings, log.date_logged],
     function (err) {
-      expect(err).toBeNull();
+      if (err) return done(err);
       db.get(
-        `SELECT * FROM consumption_logs WHERE log_id = ?`,
-        [log.log_id],
+        `SELECT * FROM consumption_logs WHERE id = ?`,
+        [log.id],
         (err, row) => {
-          expect(err).toBeNull();
-          expect(row).toBeDefined();
-          db.run(
-            `DELETE FROM consumption_logs WHERE log_id = ?`,
-            [log.log_id],
-            done
-          );
+          if (err) return done(err);
+          try {
+            expect(row).toBeDefined();
+            expect(row.id).toBe(log.id);
+          } catch (e) {
+            return done(e);
+          }
+          db.run(`DELETE FROM consumption_logs WHERE id = ?`, [log.id], done);
         }
       );
     }
@@ -155,6 +164,7 @@ test("Insert and retrieve a consumption_logs row", (done) => {
 
 test("Insert and retrieve a grocery_items row", (done) => {
   const item = {
+    id: Date.now(),
     item_id: Date.now(),
     user_id: Date.now(),
     name: "Bread",
@@ -163,8 +173,9 @@ test("Insert and retrieve a grocery_items row", (done) => {
     expiration_date: "7/01/2025",
   };
   db.run(
-    `INSERT INTO grocery_items (item_id, user_id, name, quantity, added_date, expiration_date) VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO grocery_items (id, item_id, user_id, name, quantity, added_date, expiration_date) VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
+      item.id,
       item.item_id,
       item.user_id,
       item.name,
@@ -173,18 +184,19 @@ test("Insert and retrieve a grocery_items row", (done) => {
       item.expiration_date,
     ],
     function (err) {
-      expect(err).toBeNull();
+      if (err) return done(err);
       db.get(
-        `SELECT * FROM grocery_items WHERE item_id = ?`,
-        [item.item_id],
+        `SELECT * FROM grocery_items WHERE id = ?`,
+        [item.id],
         (err, row) => {
-          expect(err).toBeNull();
-          expect(row).toBeDefined();
-          db.run(
-            `DELETE FROM grocery_items WHERE item_id = ?`,
-            [item.item_id],
-            done
-          );
+          if (err) return done(err);
+          try {
+            expect(row).toBeDefined();
+            expect(row.id).toBe(item.id);
+          } catch (e) {
+            return done(e);
+          }
+          db.run(`DELETE FROM grocery_items WHERE id = ?`, [item.id], done);
         }
       );
     }
@@ -193,37 +205,37 @@ test("Insert and retrieve a grocery_items row", (done) => {
 
 test("Insert and retrieve a reminders row", (done) => {
   const reminder = {
-    reminder_id: Date.now(),
+    id: Date.now(),
     user_id: Date.now(),
-    food_name: "Eggs",
+    item_id: Date.now(),
     reminder_date: "6/28/2025",
     reminder_type: "Item expires",
     notified: "True",
   };
   db.run(
-    `INSERT INTO reminders (reminder_id, user_id, food_name, reminder_date, reminder_type, notified) VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO reminders (id, user_id, item_id, reminder_date, reminder_type, notified) VALUES (?, ?, ?, ?, ?, ?)`,
     [
-      reminder.reminder_id,
+      reminder.id,
       reminder.user_id,
-      reminder.food_name,
+      reminder.item_id,
       reminder.reminder_date,
       reminder.reminder_type,
       reminder.notified,
     ],
     function (err) {
-      expect(err).toBeNull();
-
+      if (err) return done(err);
       db.get(
-        `SELECT * FROM reminders WHERE reminder_id = ?`,
-        [reminder.reminder_id],
+        `SELECT * FROM reminders WHERE id = ?`,
+        [reminder.id],
         (err, row) => {
-          expect(err).toBeNull();
-          expect(row).toBeDefined();
-          db.run(
-            `DELETE FROM reminders WHERE reminder_id = ?`,
-            [reminder.reminder_id],
-            done
-          );
+          if (err) return done(err);
+          try {
+            expect(row).toBeDefined();
+            expect(row.id).toBe(reminder.id);
+          } catch (e) {
+            return done(e);
+          }
+          db.run(`DELETE FROM reminders WHERE id = ?`, [reminder.id], done);
         }
       );
     }
