@@ -1,11 +1,6 @@
-import sqlite3 from "sqlite3";
-import path from "path";
-import { fileURLToPath } from "url";
-const dbPath = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "db",
-  "fridge.db"
-);
+const sqlite3 = require("sqlite3");
+const path = require("path");
+const dbPath = path.resolve(__dirname, "db", "fridge.db");
 
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
@@ -87,4 +82,5 @@ db.serialize(() => {
     )`);
 });
 
-export default db;
+module.exports = db;
+
