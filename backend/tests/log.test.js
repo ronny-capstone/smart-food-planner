@@ -68,7 +68,7 @@ describe("Consumption log routes", () => {
 
   test("User deletes log", async () => {
     const createRes = await request(app).post("/log").send(testLog);
-    const createdLogId = createRes.params;
+    const createdLogId = createRes.body.id;
     const deleteRes = await request(app).delete(`/log/${createdLogId}`);
     expect(deleteRes.statusCode).toBe(StatusCodes.OK);
     expect(deleteRes.text).toBe("Deleted log");

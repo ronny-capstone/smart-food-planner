@@ -41,7 +41,7 @@ logRoutes.post("/", (req, res) => {
 
 // Get all log entries
 logRoutes.get("/", async (req, res) => {
-  db.all("SELECT * FROM consumption_logs", async (err, rows) => {
+  db.all("SELECT log_id FROM consumption_logs", async (err, rows) => {
     if (err) {
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)
@@ -142,7 +142,6 @@ logRoutes.delete("/:id", async (req, res) => {
         }
         return res.status(StatusCodes.OK).send("Deleted log");
       });
-      return res.status(StatusCodes.OK).send("Deleted log");
     });
   } catch (err) {
     res
