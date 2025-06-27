@@ -1,6 +1,7 @@
 const sqlite3 = require("sqlite3");
 const express = require("express");
 const path = require("path");
+const { STATUS_CODES } = require("http");
 const logRoutes = express.Router();
 const StatusCodes = require("http-status-codes").StatusCodes;
 
@@ -123,15 +124,26 @@ logRoutes.patch("/:id", async (req, res) => {
 // Delete log
 logRoutes.delete("/:id", async (req, res) => {
   try {
-    const { id } = req.body;
-    db.run(`DELETE FROM consumption_logs WHERE id = ?`, [id], function (err) {
+    const { id } = req.params;
+    db.get("SELECT * FROM consumption_logs WHERE id = ?", [id], (err, row) => {
       if (err) {
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
-          .send("Error deleting from table");
+          .send("Database error");
       }
+      if (!row) {
+        return res.status(StatusCodes.NOT_FOUND).send("Log entry not found");
+      }
+      db.run(`DELETE FROM consumption_logs WHERE id = ?`, [id], function (err) {
+        if (err) {
+          return res
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .send("Error deleting from table");
+        }
+        return res.status(StatusCodes.OK).send("Deleted log");
+      });
+      return res.status(StatusCodes.OK).send("Deleted log");
     });
-    return res.status(StatusCodes.CREATED).send("Deleted log");
   } catch (err) {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
