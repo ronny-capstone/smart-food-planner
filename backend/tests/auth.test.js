@@ -4,8 +4,10 @@ const path = require("path");
 const session = require("express-session");
 const authRoutes = require("../routes/auth");
 const request = require("supertest");
+const StatusCodes = require("http-status-codes").StatusCodes;
 
 const router = express.Router();
+const MAX_AGE = 1000 * 60 * 60;
 
 let db;
 
@@ -20,7 +22,7 @@ app.use(
     secret: "capstone-secret-key",
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false, maxAge: 1000 * 60 * 60 },
+    cookie: { secure: false, maxAge: MAX_AGE },
   })
 );
 app.use("/auth", authRoutes);
@@ -51,7 +53,7 @@ describe("Authentication routes", () => {
 
   test("User signs up", async () => {
     const res = await request(app).post("/auth/signup").send(testUser);
-    expect(res.statusCode).toBe(201);
+    expect(res.statusCode).toBe(StatusCodes.CREATED);
     expect(res.text).toBe("Signup successful!");
   });
 
@@ -59,7 +61,7 @@ describe("Authentication routes", () => {
     const res = await request(app)
       .post("/auth/signup")
       .send({ username: "", password: "" });
-    expect(res.statusCode).toBe(400);
+    expect(res.statusCode).toBe(StatusCodes.BAD_REQUEST);
     expect(res.text).toBe("Username and password are required.");
   });
 
@@ -67,21 +69,21 @@ describe("Authentication routes", () => {
     const res = await request(app)
       .post("/auth/signup")
       .send({ username: "usertester", password: "123" });
-    expect(res.statusCode).toBe(400);
+    expect(res.statusCode).toBe(StatusCodes.BAD_REQUEST);
     expect(res.text).toBe("Password must be at least 8 characters long.");
   });
 
   test("Sign in, username already taken", async () => {
     await request(app).post("/auth/signup").send(testUser);
     const res = await request(app).post("/auth/signup").send(testUser);
-    expect(res.statusCode).toBe(400);
+    expect(res.statusCode).toBe(StatusCodes.BAD_REQUEST);
     expect(res.text).toBe("Username already taken");
   });
 
   test("User logs in", async () => {
     await request(app).post("/auth/signup").send(testUser);
     const res = await request(app).post("/auth/login").send(testUser);
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(StatusCodes.OK);
     expect(res.text).toBe("Login successful!");
   });
 
@@ -89,7 +91,7 @@ describe("Authentication routes", () => {
     const res = await request(app)
       .post("/auth/login")
       .send({ username: "", password: "" });
-    expect(res.statusCode).toBe(400);
+    expect(res.statusCode).toBe(StatusCodes.BAD_REQUEST);
     expect(res.text).toBe("Username and password are required");
   });
 
@@ -97,13 +99,13 @@ describe("Authentication routes", () => {
     const res = await request(app)
       .post("/auth/login")
       .send({ username: "nonexistent", password: "password123" });
-    expect(res.statusCode).toBe(401);
+    expect(res.statusCode).toBe(StatusCodes.UNAUTHORIZED);
     expect(res.text).toBe("Invalid username or password");
   });
 
   test("User not logged in, tries /me", async () => {
     const res = await agent.get("/auth/me");
-    expect(res.statusCode).toBe(401);
+    expect(res.statusCode).toBe(StatusCodes.UNAUTHORIZED);
     expect(res.text).toBe("Not logged in");
   });
 
@@ -112,7 +114,7 @@ describe("Authentication routes", () => {
     await agent.post("/auth/signup").send(testUser);
     await agent.post("/auth/login").send(testUser);
     const meRes = await agent.get("/auth/me");
-    expect(meRes.statusCode).toBe(200);
+    expect(meRes.statusCode).toBe(StatusCodes.OK);
     expect(meRes.body).toEqual({
       username: testUser.username,
     });
@@ -121,7 +123,7 @@ describe("Authentication routes", () => {
   test("User logs out", async () => {
     await request(app).post("/auth/login").send(testUser);
     const res = await request(app).post("/auth/logout").send(testUser);
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(StatusCodes.OK);
     expect(res.text).toBe("Logout successful!");
   });
 });
