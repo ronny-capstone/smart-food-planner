@@ -23,6 +23,28 @@ export default function LogList() {
     setShowModal(false);
   };
 
+  const handleDelete = async (logToDelete) => {
+    try {
+      await fetch(`${API_BASE_URL}/log/${logToDelete.id}`, {
+        method: "DELETE",
+      })
+        .then((response) => {
+          if (response.status === 200) {
+            setLogs(
+              logs.filter(function (log) {
+                return log !== logToDelete;
+              })
+            );
+          }
+        })
+        .catch((err) => {
+          console.log("Failed to delete log:", err);
+        });
+    } catch (err) {
+      console.log("Failed to delete log:", err.message);
+    }
+  };
+
   const formatDateString = (dateString) => {
     const [year, month, day] = dateString.split("-");
     const date = new Date(year, month - 1, day);
@@ -36,6 +58,16 @@ export default function LogList() {
 
   return (
     <div>
+      <button onClick={() => setShowModal(true)}> Add new log </button>
+      {showModal && (
+        <LogModal onClose={() => setShowModal(false)}>
+          {" "}
+          <LogForm
+            handleLogAdded={handleLogAdded}
+            setShowModal={setShowModal}
+          />{" "}
+        </LogModal>
+      )}
       <div className="logList">
         {logs.length == 0 && <p> No logs yet! </p>}
         {/* Sorted by most recently added  */}
@@ -50,21 +82,11 @@ export default function LogList() {
                 </h3>
                 <p className="log-item"> Food item: {log.item_id} </p>
                 <p className="log-servings"> Servings: {log.servings} </p>
+                <button onClick={() => handleDelete(log)}> Delete </button>
               </div>
             );
           })}
       </div>
-
-      <button onClick={() => setShowModal(true)}> Add new log </button>
-      {showModal && (
-        <LogModal onClose={() => setShowModal(false)}>
-          {" "}
-          <LogForm
-            handleLogAdded={handleLogAdded}
-            setShowModal={setShowModal}
-          />{" "}
-        </LogModal>
-      )}
     </div>
   );
 }
