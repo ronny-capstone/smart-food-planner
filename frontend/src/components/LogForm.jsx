@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_BASE_URL } from "../utils/api";
 export default function LogForm({ handleLogAdded, setShowModal }) {
   const [userId, setUserId] = useState();
   const [dateLogged, setDateLogged] = useState(
@@ -24,7 +25,7 @@ export default function LogForm({ handleLogAdded, setShowModal }) {
     }
 
     try {
-      await fetch(`http://localhost:3000/log`, {
+      await fetch(`${API_BASE_URL}/log`, {
         method: "POST",
         body: JSON.stringify({
           user_id: 1,
