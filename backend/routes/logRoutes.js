@@ -41,7 +41,7 @@ logRoutes.post("/", (req, res) => {
 
 // Get all log entries
 logRoutes.get("/", async (req, res) => {
-  db.all("SELECT log_id FROM consumption_logs", async (err, rows) => {
+  db.all("SELECT * FROM consumption_logs", async (err, rows) => {
     if (err) {
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)
