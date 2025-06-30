@@ -18,18 +18,26 @@ logRoutes.post("/", (req, res) => {
         .status(StatusCodes.BAD_REQUEST)
         .send("Missing required fields: user_id, item_id, servings");
     }
+    const dateLogged = new Date(Date.now()).toDateString();
     db.run(
       `INSERT INTO consumption_logs (user_id, item_id, servings, date_logged) VALUES (?, ?, ?, ?)`,
-      [user_id, item_id, servings, new Date(Date.now()).toDateString()],
+      [user_id, item_id, servings, dateLogged],
       function (err) {
         if (err) {
           return res
             .status(StatusCodes.INTERNAL_SERVER_ERROR)
             .send("Error inserting into table");
         }
+        const insertedLog = {
+          id: this.lastID,
+          user_id: user_id,
+          item_id: item_id,
+          servings: servings,
+          date_logged: dateLogged,
+        };
         return res
           .status(StatusCodes.CREATED)
-          .json({ message: "Created log", id: this.lastID });
+          .json({ message: "Created log", log: insertedLog });
       }
     );
   } catch (err) {

@@ -15,17 +15,18 @@ export default function LogList() {
       .catch((err) => {
         console.log(err.message);
       });
-  }, []);
+  }, [setLogs]);
 
   const handleLogAdded = (createdLog) => {
-    setLogs([createdLog, ...logs]);
+    setLogs((prevLogs) => [createdLog.log, ...prevLogs]);
     setShowModal(false);
   };
 
   return (
     <div>
       <div className="logList">
-        {logs.map((log) => {
+         {/* Sorted by most recently added  */}
+        {logs.sort((a, b) => b.id - a.id).map((log) => {
           return (
             <div className="logCard" key={log.id}>
               <h3 className="log-title"> Log for {log.date_logged} </h3>
@@ -40,7 +41,10 @@ export default function LogList() {
       {showModal && (
         <LogModal onClose={() => setShowModal(false)}>
           {" "}
-          <LogForm onAddLog={handleLogAdded} setShowModal={setShowModal} />{" "}
+          <LogForm
+            handleLogAdded={handleLogAdded}
+            setShowModal={setShowModal}
+          />{" "}
         </LogModal>
       )}
     </div>
