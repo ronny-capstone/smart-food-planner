@@ -1,5 +1,6 @@
 import LogModal from "./LogModal";
 import LogForm from "./LogForm";
+import { API_BASE_URL } from "../utils/api";
 import { useEffect, useState } from "react";
 
 export default function LogList() {
@@ -7,7 +8,7 @@ export default function LogList() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/log/`)
+    fetch(`${API_BASE_URL}/log`)
       .then((response) => response.json())
       .then((data) => {
         setLogs(data);
