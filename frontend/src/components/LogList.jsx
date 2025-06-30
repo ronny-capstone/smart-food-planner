@@ -22,19 +22,36 @@ export default function LogList() {
     setShowModal(false);
   };
 
+  const formatDateString = (dateString) => {
+    const [year, month, day] = dateString.split("-");
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   return (
     <div>
       <div className="logList">
-         {/* Sorted by most recently added  */}
-        {logs.sort((a, b) => b.id - a.id).map((log) => {
-          return (
-            <div className="logCard" key={log.id}>
-              <h3 className="log-title"> Log for {log.date_logged} </h3>
-              <p className="log-item"> Food item: {log.item_id} </p>
-              <p className="log-servings"> Servings: {log.servings} </p>
-            </div>
-          );
-        })}
+        {logs.length == 0 && <p> No logs yet! </p>}
+        {/* Sorted by most recently added  */}
+        {logs
+          .sort((a, b) => b.id - a.id)
+          .map((log) => {
+            return (
+              <div className="logCard" key={log.id}>
+                <h3 className="log-title">
+                  {" "}
+                  Log for {formatDateString(log.date_logged)}{" "}
+                </h3>
+                <p className="log-item"> Food item: {log.item_id} </p>
+                <p className="log-servings"> Servings: {log.servings} </p>
+              </div>
+            );
+          })}
       </div>
 
       <button onClick={() => setShowModal(true)}> Add new log </button>

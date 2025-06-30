@@ -13,15 +13,16 @@ const db = new sqlite3.Database(dbPath);
 logRoutes.post("/", (req, res) => {
   try {
     const { user_id, item_id, servings } = req.body;
+    const date_logged =
+      req.body.date_logged || new Date().toISOString().split("T")[0];
     if (!user_id || !item_id || servings === undefined) {
       return res
         .status(StatusCodes.BAD_REQUEST)
         .send("Missing required fields: user_id, item_id, servings");
     }
-    const dateLogged = new Date(Date.now()).toDateString();
     db.run(
       `INSERT INTO consumption_logs (user_id, item_id, servings, date_logged) VALUES (?, ?, ?, ?)`,
-      [user_id, item_id, servings, dateLogged],
+      [user_id, item_id, servings, date_logged],
       function (err) {
         if (err) {
           return res
@@ -33,7 +34,7 @@ logRoutes.post("/", (req, res) => {
           user_id: user_id,
           item_id: item_id,
           servings: servings,
-          date_logged: dateLogged,
+          date_logged: date_logged,
         };
         return res
           .status(StatusCodes.CREATED)
