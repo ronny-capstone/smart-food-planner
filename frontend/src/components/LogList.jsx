@@ -65,6 +65,7 @@ export default function LogList() {
           <LogForm
             handleLogAdded={handleLogAdded}
             setShowModal={setShowModal}
+            type="add"
           />{" "}
         </LogModal>
       )}
@@ -82,6 +83,17 @@ export default function LogList() {
                 </h3>
                 <p className="log-item"> Food item: {log.item_id} </p>
                 <p className="log-servings"> Servings: {log.servings} </p>
+                <button onClick={() => setShowModal(true)}> Update </button>
+                {showModal && (
+                  <LogModal onClose={() => setShowModal(false)}>
+                    {" "}
+                    <LogForm
+                      handleLogAdded={handleLogAdded}
+                      setShowModal={setShowModal}
+                      type="update"
+                    />{" "}
+                  </LogModal>
+                )}
                 <button onClick={() => handleDelete(log)}> Delete </button>
               </div>
             );
