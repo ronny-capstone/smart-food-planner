@@ -2,9 +2,12 @@ import LogModal from "./LogModal";
 import LogForm from "./LogForm";
 import { API_BASE_URL } from "../utils/api";
 import { useEffect, useState } from "react";
+import { active } from "promise-inflight";
 
 export default function LogList() {
   const [logs, setLogs] = useState([]);
+  const [activeModal, setActiveModal] = useState(null);
+  const [logToUpdate, setLogToUpdate] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -20,7 +23,17 @@ export default function LogList() {
 
   const handleLogAdded = (createdLog) => {
     setLogs((prevLogs) => [createdLog.log, ...prevLogs]);
-    setShowModal(false);
+    setActiveModal(null);
+  };
+
+  const handleLogUpdated = (updatedLog) => {
+    setLogs((prevLogs) =>
+      prevLogs.map((log) =>
+        log.id === updatedLog.log.id ? updatedLog.log : log
+      )
+    );
+    setActiveModal(null);
+    setLogToUpdate(null);
   };
 
   const handleDelete = async (logToDelete) => {
@@ -45,6 +58,21 @@ export default function LogList() {
     }
   };
 
+  const openAddModal = (log) => {
+    setActiveModal("add");
+    setLogToUpdate(null);
+  };
+
+  const openUpdateModal = (log) => {
+    setActiveModal(`update-${log.id}`);
+    setLogToUpdate(log);
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
+    setLogToUpdate(null);
+  };
+
   const formatDateString = (dateString) => {
     const [year, month, day] = dateString.split("-");
     const date = new Date(year, month - 1, day);
@@ -58,14 +86,16 @@ export default function LogList() {
 
   return (
     <div>
-      <button onClick={() => setShowModal(true)}> Add new log </button>
-      {showModal && (
-        <LogModal onClose={() => setShowModal(false)}>
+      <button onClick={openAddModal}> Add new log </button>
+      {activeModal === "add" && (
+        <LogModal onClose={closeModal}>
           {" "}
           <LogForm
             handleLogAdded={handleLogAdded}
-            setShowModal={setShowModal}
+            handleLogUpdated={handleLogUpdated}
+            setShowModal={closeModal}
             type="add"
+            logToUpdate={null}
           />{" "}
         </LogModal>
       )}
@@ -83,18 +113,20 @@ export default function LogList() {
                 </h3>
                 <p className="log-item"> Food item: {log.item_id} </p>
                 <p className="log-servings"> Servings: {log.servings} </p>
-                <button onClick={() => setShowModal(true)}> Update </button>
-                {showModal && (
-                  <LogModal onClose={() => setShowModal(false)}>
+                <button onClick={() => openUpdateModal(log)}> Update </button>
+                <button onClick={() => handleDelete(log)}> Delete </button>
+                {activeModal === `update-${log.id}` && (
+                  <LogModal onClose={closeModal}>
                     {" "}
                     <LogForm
                       handleLogAdded={handleLogAdded}
-                      setShowModal={setShowModal}
+                      handleLogUpdated={handleLogUpdated}
+                      setShowModal={closeModal}
                       type="update"
+                      logToUpdate={log}
                     />{" "}
                   </LogModal>
                 )}
-                <button onClick={() => handleDelete(log)}> Delete </button>
               </div>
             );
           })}

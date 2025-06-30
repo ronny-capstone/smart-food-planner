@@ -1,6 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
-export default function LogForm({ handleLogAdded, setShowModal, type }) {
+export default function LogForm({
+  handleLogAdded,
+  handleLogUpdated,
+  setShowModal,
+  type,
+  logToUpdate,
+}) {
   const [userId, setUserId] = useState();
   const [dateLogged, setDateLogged] = useState(
     new Date().toISOString().split("T")[0]
@@ -9,22 +15,29 @@ export default function LogForm({ handleLogAdded, setShowModal, type }) {
   const [foodItem, setFoodItem] = useState("");
   const [servings, setServings] = useState("");
 
-  const handleSubmit = async (e) => {
-    if (type === "add") {
-      e.preventDefault();
-      if (foodItem.trim() === "" || servings.trim() === "") {
-        alert("Please fill out all fields.");
-        return;
-      }
-      if (
-        !Number.isInteger(parseInt(foodItem)) ||
-        !Number.isInteger(parseInt(servings)) ||
-        parseInt(servings) <= 0
-      ) {
-        alert("Please enter a positive number for servings.");
-        return;
-      }
+  useEffect(() => {
+    if (type === "update" && logToUpdate) {
+      setDateLogged(logToUpdate.date_logged);
+      setDateLogged(logToUpdate.item_id.toString());
+      setDateLogged(logToUpdate.servings.toString());
+    }
+  }, [type, logToUpdate]);
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (foodItem.trim() === "" || servings.trim() === "") {
+      alert("Please fill out all fields.");
+      return;
+    }
+    if (
+      !Number.isInteger(parseInt(foodItem)) ||
+      !Number.isInteger(parseInt(servings)) ||
+      parseInt(servings) <= 0
+    ) {
+      alert("Please enter a positive number for servings.");
+      return;
+    }
+    if (type === "add") {
       try {
         await fetch(`${API_BASE_URL}/log`, {
           method: "POST",
@@ -44,6 +57,7 @@ export default function LogForm({ handleLogAdded, setShowModal, type }) {
             setDateLogged("");
             setFoodItem("");
             setServings("");
+            setShowModal(false);
           })
           .catch((err) => {
             console.log("Failed to create log:", err);
@@ -51,11 +65,9 @@ export default function LogForm({ handleLogAdded, setShowModal, type }) {
       } catch (err) {
         console.log("Failed to create log:", err.message);
       }
-
-      setShowModal(false);
     } else if (type === "update") {
       try {
-        await fetch(`${API_BASE_URL}/${logToUpdate.id}`, {
+        await fetch(`${API_BASE_URL}/log/${logToUpdate.id}`, {
           method: "PATCH",
           body: JSON.stringify({
             user_id: 1,
@@ -69,9 +81,11 @@ export default function LogForm({ handleLogAdded, setShowModal, type }) {
         })
           .then((response) => response.json())
           .then((data) => {
+            handleLogUpdated(data);
             setDateLogged("");
             setFoodItem("");
             setServings("");
+            setShowModal(false);
           })
           .catch((err) => {
             console.log("Failed to update log:", err);
