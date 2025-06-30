@@ -86,14 +86,6 @@ logRoutes.patch("/:id", async (req, res) => {
     const { id } = req.params;
     const { servings, item_id, date_logged } = req.body;
 
-    const updatedLog = {
-      id: this.lastID,
-      user_id: user_id,
-      item_id: item_id,
-      servings: servings,
-      date_logged: date_logged,
-    };
-
     const updates = [];
     const values = [];
 
@@ -129,9 +121,20 @@ logRoutes.patch("/:id", async (req, res) => {
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .send("Error updating table");
       }
-      return res
-        .status(StatusCodes.OK)
-        .json({ message: "Updated log", log: updatedLog });
+      db.get(
+        `SELECT * FROM consumption_logs WHERE id = ?`,
+        [id],
+        (err, row) => {
+          if (err) {
+            return res
+              .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+              .send("Error fetching updated record");
+          }
+          return res
+            .status(STATUS_CODES.OK)
+            .json({ message: "Updated log", log: row });
+        }
+      );
     });
   } catch (err) {
     res
