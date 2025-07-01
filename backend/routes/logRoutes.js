@@ -107,7 +107,7 @@ logRoutes.patch("/:id", async (req, res) => {
     if (updates.length === 0) {
       return res
         .status(StatusCodes.BAD_REQUEST)
-        .send("No valid fields sent to update");
+        .json({ error: "No valid fields sent to update" });
     }
 
     values.push(id);
@@ -119,7 +119,7 @@ logRoutes.patch("/:id", async (req, res) => {
       if (err) {
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
-          .send("Error updating table");
+          .json({ error: "Error updating table" });
       }
       db.get(
         `SELECT * FROM consumption_logs WHERE id = ?`,
@@ -127,19 +127,18 @@ logRoutes.patch("/:id", async (req, res) => {
         (err, row) => {
           if (err) {
             return res
-              .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-              .send("Error fetching updated record");
+              .status(StatusCodes.INTERNAL_SERVER_ERROR)
+              .json({ error: "Error fetching updated record" });
           }
           return res
-            .status(STATUS_CODES.OK)
+            .status(StatusCodes.OK)
             .json({ message: "Updated log", log: row });
         }
       );
     });
   } catch (err) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .send("An error occurred while updating a log");
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+    json({ error: "An error occurred while updating a log" });
   }
 });
 
