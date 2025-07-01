@@ -2,13 +2,11 @@ import LogModal from "./LogModal";
 import LogForm from "./LogForm";
 import { API_BASE_URL } from "../utils/api";
 import { useEffect, useState } from "react";
-import { active } from "promise-inflight";
 
 export default function LogList() {
   const [logs, setLogs] = useState([]);
   const [activeModal, setActiveModal] = useState(null);
   const [logToUpdate, setLogToUpdate] = useState(null);
-  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/log`)

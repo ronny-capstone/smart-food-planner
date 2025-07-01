@@ -7,7 +7,6 @@ export default function LogForm({
   type,
   logToUpdate,
 }) {
-  const [userId, setUserId] = useState();
   const [dateLogged, setDateLogged] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -18,8 +17,8 @@ export default function LogForm({
   useEffect(() => {
     if (type === "update" && logToUpdate) {
       setDateLogged(logToUpdate.date_logged);
-      setDateLogged(logToUpdate.item_id.toString());
-      setDateLogged(logToUpdate.servings.toString());
+      setFoodItem(logToUpdate.item_id.toString());
+      setServings(logToUpdate.servings.toString());
     }
   }, [type, logToUpdate]);
 
