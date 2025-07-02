@@ -6,9 +6,14 @@ export default function FoodItemList() {
   const [showModal, setShowModal] = useState(false);
   const [itemResults, setItemResults] = useState([]);
   const [item, setItem] = useState([]);
+  const [chosenItems, setChoseItems] = useState([]);
 
   const handleItemAdded = (newItems) => {
-    setItemResults((prevItemResults) => [...newItems, ...prevItemResults]);
+    setItemResults((prevItemResults) => [newItems, ...prevItemResults]);
+  };
+
+  const handleItemChosen = (chosenItem) => {
+    setItemResults((prevChosenItems) => [...prevChosenItems, chosenItem]);
   };
 
   return (
@@ -19,6 +24,7 @@ export default function FoodItemList() {
           setItemResults={setItemResults}
           itemResults={itemResults}
           setItem={setItem}
+          handleItemChosen={handleItemChosen}
           onClose={() => setShowModal(false)}
         >
           {" "}
@@ -28,8 +34,10 @@ export default function FoodItemList() {
           />
         </LogModal>
       )}
-      {item.length == 0 && <p> No items yet! </p>}
-      {item && <p> {item.name} </p>}
+      {chosenItems.length == 0 && <p> No items yet! </p>}
+      {chosenItems.map((chosenItem) => {
+        <p> {chosenItem.name} </p>;
+      })}
     </div>
   );
 }

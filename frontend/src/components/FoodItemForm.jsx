@@ -12,7 +12,7 @@ export default function FoodItemForm({ handleItemAdded }) {
     }
 
     try {
-      fetch(`${baseUrl}/food?query=${encodeURIComponent(foodItem)}`)
+      fetch(`${baseUrl}/food/search?query=${encodeURIComponent(foodItem)}`)
         .then((response) => {
           const contentType = response.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
@@ -22,7 +22,11 @@ export default function FoodItemForm({ handleItemAdded }) {
           }
         })
         .then((data) => {
-          handleItemAdded(data.results);
+          const newItem = {
+            id: data.id,
+            name: foodItem,
+          };
+          handleItemAdded([newItem]);
         })
         .catch((err) => {
           console.log(err.message);

@@ -11,7 +11,6 @@ const app = express();
 const PORT = 3000;
 const MAX_AGE = 1000 * 60 * 60;
 
-console.log("Loaded API key", process.env.SPOONACULAR_API_KEY);
 db.run("PRAGMA foreign_keys = ON");
 app.use(cors());
 app.use(express.json());

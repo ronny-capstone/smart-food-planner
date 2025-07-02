@@ -1,7 +1,6 @@
 const sqlite3 = require("sqlite3");
 const express = require("express");
 const path = require("path");
-const { STATUS_CODES } = require("http");
 const logRoutes = express.Router();
 const StatusCodes = require("http-status-codes").StatusCodes;
 
