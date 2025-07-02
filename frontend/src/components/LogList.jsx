@@ -56,7 +56,7 @@ export default function LogList() {
     }
   };
 
-  const openAddModal = (log) => {
+  const openAddModal = () => {
     setActiveModal("add");
     setLogToUpdate(null);
   };

@@ -1,5 +1,4 @@
 require("dotenv").config({ path: "./.env" });
-const sqlite3 = require("sqlite3");
 const express = require("express");
 const path = require("path");
 const foodRoutes = express.Router();
@@ -9,8 +8,6 @@ const dbPath = path.resolve(__dirname, "../db/fridge.db");
 const apiKey = process.env.SPOONACULAR_API_KEY;
 const baseUrl = process.env.SPOONACULAR_BASE_URL;
 
-const db = new sqlite3.Database(dbPath);
-
 // Search for food item
 foodRoutes.get("/", async (req, res) => {
   const item = req.query.query;
@@ -19,10 +16,9 @@ foodRoutes.get("/", async (req, res) => {
       .status(StatusCodes.BAD_REQUEST)
       .json({ error: "Missing query parameter" });
   }
-
   try {
     const response = await axios.get(
-      `${baseUrl}/food?query=${item}&number=2&apiKey=${apiKey}`
+      `${baseUrl}/ingredients/search?query=${item}&number=2&apiKey=${apiKey}`
     );
 
     return res.json(response.data);

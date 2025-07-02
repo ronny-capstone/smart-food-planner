@@ -1,12 +1,8 @@
 import { useState, useEffect } from "react";
 
-export default function FoodItemForm({ setShowModal }) {
-  const [dateLogged, setDateLogged] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-
+export default function FoodItemForm({ handleItemAdded }) {
   const [foodItem, setFoodItem] = useState("");
-  const [results, setResults] = useState([]);
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,17 +10,19 @@ export default function FoodItemForm({ setShowModal }) {
       alert("Please fill out all fields.");
       return;
     }
-    setResults([]);
-    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
     try {
       fetch(`${baseUrl}/food?query=${encodeURIComponent(foodItem)}`)
         .then((response) => {
-          return response.json();
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            return response.json();
+          } else {
+            throw new Error("unexpected response format");
+          }
         })
         .then((data) => {
-          console.log(data);
-          console.log(data.results);
-          setResults(data.results || []);
+          handleItemAdded(data.results);
         })
         .catch((err) => {
           console.log(err.message);
