@@ -53,7 +53,7 @@ authRoutes.post(SIGNUP_PATH, (req, res) => {
             if (err) {
               return res
                 .status(StatusCodes.INTERNAL_SERVER_ERROR)
-                .send("Unable to sign up. Please try again");
+               .send("Unable to sign up. Please try again");
             }
           }
         );

@@ -114,7 +114,6 @@ describe("Consumption log routes", () => {
     const updateRes = await request(app)
       .patch(`${API_PATH}/${createdLogId}`)
       .send(updatedLog);
-
     expect(updateRes.statusCode).toBe(StatusCodes.OK);
     expect(updateRes.body.message).toBe("Updated log");
     expect(updateRes.body.log.item_id).toBe(parseInt(updatedLog.item_id));
