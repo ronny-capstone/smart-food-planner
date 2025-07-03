@@ -8,7 +8,8 @@ const axios = require("axios");
 const apiKey = process.env.SPOONACULAR_API_KEY;
 const baseUrl = process.env.SPOONACULAR_BASE_URL;
 const dbPath = path.resolve(__dirname, "../db/fridge.db");
-
+const SEARCH_PATH = "/search"
+const NUTRITION_PATH = "/nutrition"
 const db = new sqlite3.Database(dbPath);
 
 // Get all food items
@@ -17,14 +18,14 @@ foodRoutes.get("/", async (req, res) => {
     if (err) {
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .send("Database error");
+        .send("Unable to get items");
     }
     return res.status(StatusCodes.OK).json(rows);
   });
 });
 
 // Search for food item
-foodRoutes.get("/search", async (req, res) => {
+foodRoutes.get(SEARCH_PATH, async (req, res) => {
   const item = req.query.query;
   if (!item) {
     return res
@@ -45,7 +46,7 @@ foodRoutes.get("/search", async (req, res) => {
 });
 
 // Get nutritional information for food item
-foodRoutes.get("/nutrition", async (req, res) => {
+foodRoutes.get(NUTRITION_PATH, async (req, res) => {
   const itemId = req.query.itemId;
   if (!itemId) {
     return res
@@ -68,8 +69,24 @@ foodRoutes.get("/nutrition", async (req, res) => {
 // Add to foodItems db
 foodRoutes.post("/", async (req, res) => {
   const { name, calories, protein, carbs, fats, sugars } = req.body;
-  if (!name || !calories || !protein || !carbs || !fats || !sugars) {
-    return res.status(StatusCodes.BAD_REQUEST).send("Missing required fields");
+  if (
+    name === undefined ||
+    name === null ||
+    name === "" ||
+    calories === undefined ||
+    calories === null ||
+    protein === undefined ||
+    protein === null ||
+    carbs === undefined ||
+    carbs === null ||
+    fats === undefined ||
+    fats === null ||
+    sugars === undefined ||
+    sugars === null
+  ) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ error: "Missing required fields" });
   }
   try {
     db.run(
@@ -79,19 +96,17 @@ foodRoutes.post("/", async (req, res) => {
         if (err) {
           return res
             .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .send("DB error", err.message);
+            .json({ error: err.message });
         }
-        return res
-          .status(StatusCodes.CREATED)
-          .json({
-            id: this.lastID,
-            name: name,
-            calories: calories,
-            protein: protein,
-            carbs: carbs,
-            fats: fats,
-            sugars: sugars,
-          });
+        return res.status(StatusCodes.CREATED).json({
+          id: this.lastID,
+          name: name,
+          calories: calories,
+          protein: protein,
+          carbs: carbs,
+          fats: fats,
+          sugars: sugars,
+        });
       }
     );
   } catch (err) {

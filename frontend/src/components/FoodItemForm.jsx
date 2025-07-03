@@ -18,15 +18,20 @@ export default function FoodItemForm({ handleItemAdded }) {
           if (contentType && contentType.includes("application/json")) {
             return response.json();
           } else {
-            throw new Error("unexpected response format");
+            throw new Error("Unexpected response format");
           }
         })
         .then((data) => {
-          const newItem = {
-            id: data.id,
-            name: foodItem,
-          };
-          handleItemAdded([newItem]);
+          if (data.results && data.results.length > 0) {
+            const searchResults = data.results.map((item) => {
+              return {
+                id: item.id,
+                name: item.name,
+                image: item.image || null,
+              };
+            });
+            handleItemAdded(searchResults);
+          }
         })
         .catch((err) => {
           console.log(err.message);

@@ -17,6 +17,7 @@ export default function LogModal({
   const handleButtonClick = (item) => {
     setItemResults("");
     try {
+      // Get nutritional information for the chosen item
       fetch(`${baseUrl}/food/nutrition?itemId=${item.id}`)
         .then((response) => {
           const contentType = response.headers.get("content-type");
@@ -69,12 +70,13 @@ export default function LogModal({
         </button>
         {itemResults &&
           itemResults.map((item) => {
-            console.log(item);
             return (
-              <button key={item.id} onClick={() => handleButtonClick(item)}>
-                {" "}
-                {item.name}{" "}
-              </button>
+              <div key={item.id}>
+                <button onClick={() => handleButtonClick(item)}>
+                  {" "}
+                  {item.name}{" "}
+                </button>
+              </div>
             );
           })}
       </div>

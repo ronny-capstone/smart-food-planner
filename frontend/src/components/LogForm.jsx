@@ -22,6 +22,66 @@ export default function LogForm({
     }
   }, [type, logToUpdate]);
 
+  const addLog = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/log`, {
+        method: "POST",
+        body: JSON.stringify({
+          user_id: 1,
+          date_logged: dateLogged,
+          item_id: parseInt(foodItem),
+          servings: parseInt(servings),
+        }),
+        headers: {
+          "Content-type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          handleLogAdded(data);
+          setDateLogged("");
+          setFoodItem("");
+          setServings("");
+          setShowModal(false);
+        })
+        .catch((err) => {
+          console.log("Failed to create log:", err);
+        });
+    } catch (err) {
+      console.log("Failed to create log:", err.message);
+    }
+  };
+
+  const updateLog = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/log/${logToUpdate.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          user_id: 1,
+          date_logged: dateLogged,
+          item_id: parseInt(foodItem),
+          servings: parseInt(servings),
+        }),
+        headers: {
+          "Content-type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          handleLogUpdated(data);
+          setDateLogged("");
+          setFoodItem("");
+          setServings("");
+          setShowModal(false);
+        })
+        .catch((err) => {
+          console.log("Failed to update log:", err);
+        });
+    } catch (err) {
+      console.log("Failed to update log:", err.message);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (foodItem.trim() === "" || servings.trim() === "") {
@@ -33,65 +93,13 @@ export default function LogForm({
       !Number.isInteger(parseInt(servings)) ||
       parseInt(servings) <= 0
     ) {
-      alert("Please enter a positive number for servings.");
+      alert("Please enter a positive number for food item & servings.");
       return;
     }
     if (type === "add") {
-      try {
-        await fetch(`${API_BASE_URL}/log`, {
-          method: "POST",
-          body: JSON.stringify({
-            user_id: 1,
-            date_logged: dateLogged,
-            item_id: parseInt(foodItem),
-            servings: parseInt(servings),
-          }),
-          headers: {
-            "Content-type": "application/json",
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            handleLogAdded(data);
-            setDateLogged("");
-            setFoodItem("");
-            setServings("");
-            setShowModal(false);
-          })
-          .catch((err) => {
-            console.log("Failed to create log:", err);
-          });
-      } catch (err) {
-        console.log("Failed to create log:", err.message);
-      }
+      addLog();
     } else if (type === "update") {
-      try {
-        await fetch(`${API_BASE_URL}/log/${logToUpdate.id}`, {
-          method: "PATCH",
-          body: JSON.stringify({
-            user_id: 1,
-            date_logged: dateLogged,
-            item_id: parseInt(foodItem),
-            servings: parseInt(servings),
-          }),
-          headers: {
-            "Content-type": "application/json",
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            handleLogUpdated(data);
-            setDateLogged("");
-            setFoodItem("");
-            setServings("");
-            setShowModal(false);
-          })
-          .catch((err) => {
-            console.log("Failed to update log:", err);
-          });
-      } catch (err) {
-        console.log("Failed to update log:", err.message);
-      }
+      updateLog();
     }
   };
 

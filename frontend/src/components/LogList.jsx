@@ -7,9 +7,10 @@ export default function LogList() {
   const [logs, setLogs] = useState([]);
   const [activeModal, setActiveModal] = useState(null);
   const [logToUpdate, setLogToUpdate] = useState(null);
+  const LOG_PATH = "/log";
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/log`)
+    fetch(`${API_BASE_URL}${LOG_PATH}`)
       .then((response) => response.json())
       .then((data) => {
         setLogs(data);
@@ -36,7 +37,7 @@ export default function LogList() {
 
   const handleDelete = async (logToDelete) => {
     try {
-      await fetch(`${API_BASE_URL}/log/${logToDelete.id}`, {
+      await fetch(`${API_BASE_URL}${LOG_PATH}/${logToDelete.id}`, {
         method: "DELETE",
       })
         .then((response) => {
