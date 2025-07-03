@@ -5,12 +5,13 @@ const path = require("path");
 const StatusCodes = require("http-status-codes").StatusCodes;
 
 const authRoutes = express.Router();
+const SIGNUP_PATH = "/signup";
 const dbPath = path.resolve(__dirname, "../db/fridge.db");
 
 const db = new sqlite3.Database(dbPath);
 
 // Signup Route
-authRoutes.post("/signup", (req, res) => {
+authRoutes.post(SIGNUP_PATH, (req, res) => {
   // Case-insensitive username
   const username = req.body.username.toLowerCase();
   const password = req.body.password;
@@ -52,7 +53,7 @@ authRoutes.post("/signup", (req, res) => {
             if (err) {
               return res
                 .status(StatusCodes.INTERNAL_SERVER_ERROR)
-                .send("Error inserting into table");
+               .send("Unable to sign up. Please try again");
             }
           }
         );

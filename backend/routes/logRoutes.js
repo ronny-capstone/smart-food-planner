@@ -13,6 +13,8 @@ const db = new sqlite3.Database(dbPath);
 logRoutes.post("/", (req, res) => {
   try {
     const { user_id, item_id, servings } = req.body;
+    const date_logged =
+      req.body.date_logged || new Date().toISOString().split("T")[0];
     if (!user_id || !item_id || servings === undefined) {
       return res
         .status(StatusCodes.BAD_REQUEST)
@@ -20,16 +22,23 @@ logRoutes.post("/", (req, res) => {
     }
     db.run(
       `INSERT INTO consumption_logs (user_id, item_id, servings, date_logged) VALUES (?, ?, ?, ?)`,
-      [user_id, item_id, servings, new Date(Date.now()).toDateString()],
+      [user_id, item_id, servings, date_logged],
       function (err) {
         if (err) {
           return res
             .status(StatusCodes.INTERNAL_SERVER_ERROR)
             .send("Error inserting into table");
         }
+        const insertedLog = {
+          id: this.lastID,
+          user_id: user_id,
+          item_id: item_id,
+          servings: servings,
+          date_logged: date_logged,
+        };
         return res
           .status(StatusCodes.CREATED)
-          .json({ message: "Created log", id: this.lastID });
+          .json({ message: "Created log", log: insertedLog });
       }
     );
   } catch (err) {
@@ -41,7 +50,7 @@ logRoutes.post("/", (req, res) => {
 
 // Get all log entries
 logRoutes.get("/", async (req, res) => {
-  db.all("SELECT log_id FROM consumption_logs", async (err, rows) => {
+  db.all("SELECT * FROM consumption_logs", async (err, rows) => {
     if (err) {
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)
@@ -98,7 +107,7 @@ logRoutes.patch("/:id", async (req, res) => {
     if (updates.length === 0) {
       return res
         .status(StatusCodes.BAD_REQUEST)
-        .send("No valid fields sent to update");
+        .json({ error: "No valid fields sent to update" });
     }
 
     values.push(id);
@@ -110,14 +119,26 @@ logRoutes.patch("/:id", async (req, res) => {
       if (err) {
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
-          .send("Error updating table");
+          .json({ error: "Error updating table" });
       }
-      return res.status(StatusCodes.OK).send("Updated log");
+      db.get(
+        `SELECT * FROM consumption_logs WHERE id = ?`,
+        [id],
+        (err, row) => {
+          if (err) {
+            return res
+              .status(StatusCodes.INTERNAL_SERVER_ERROR)
+              .json({ error: "Error fetching updated record" });
+          }
+          return res
+            .status(StatusCodes.OK)
+            .json({ message: "Updated log", log: row });
+        }
+      );
     });
   } catch (err) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .send("An error occurred while updating a log");
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+    json({ error: "An error occurred while updating a log" });
   }
 });
 

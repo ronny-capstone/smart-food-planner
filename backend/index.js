@@ -3,12 +3,14 @@ const express = require("express");
 const session = require("express-session");
 const authRoutes = require("./routes/authRoutes");
 const logRoutes = require("./routes/logRoutes");
+const cors = require('cors')
 
 const app = express();
 const PORT = 3000;
 const MAX_AGE = 1000 * 60 * 60;
 
 db.run("PRAGMA foreign_keys = ON");
+app.use(cors())
 app.use(express.json());
 app.use(
   session({
