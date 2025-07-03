@@ -6,19 +6,20 @@ export default function FoodItemList() {
   const [showModal, setShowModal] = useState(false);
   const [itemResults, setItemResults] = useState([]);
   const [item, setItem] = useState([]);
-  const [chosenItems, setChoseItems] = useState([]);
+  const [chosenItems, setChosenItems] = useState([]);
 
   const handleItemAdded = (newItems) => {
-    setItemResults((prevItemResults) => [newItems, ...prevItemResults]);
+    setItemResults(newItems);
   };
 
   const handleItemChosen = (chosenItem) => {
-    setItemResults((prevChosenItems) => [...prevChosenItems, chosenItem]);
+    setChosenItems((prevChosenItems) => [...prevChosenItems, chosenItem]);
+    setShowModal(false);
   };
 
   return (
     <div>
-      <button onClick={() => setShowModal(true)}> Add new food item </button>
+      <button onClick={() => setShowModal(true)}>Add new food item</button>
       {showModal && (
         <LogModal
           setItemResults={setItemResults}
@@ -34,9 +35,9 @@ export default function FoodItemList() {
           />
         </LogModal>
       )}
-      {chosenItems.length == 0 && <p> No items yet! </p>}
+      {chosenItems.length == 0 && <p>No items yet!</p>}
       {chosenItems.map((chosenItem) => {
-        <p> {chosenItem.name} </p>;
+        return <p key={chosenItem.id}>{chosenItem.name}</p>;
       })}
     </div>
   );

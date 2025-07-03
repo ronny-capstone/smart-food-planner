@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { API_BASE_URL } from "../utils/api";
 
 export default function LogModal({
   children,
@@ -7,8 +8,6 @@ export default function LogModal({
   handleItemChosen,
   setItemResults,
 }) {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
-
   const getNutrient = (nutrients, name) => {
     const nutrient = nutrients.find((n) => n.name === name);
     return nutrient ? nutrient.amount : 0;
@@ -17,7 +16,8 @@ export default function LogModal({
   const handleButtonClick = (item) => {
     setItemResults("");
     try {
-      fetch(`${baseUrl}/food/nutrition?itemId=${item.id}`)
+      // Get nutritional information for the chosen item
+      fetch(`${API_BASE_URL}/food/nutrition?itemId=${item.id}&amount=1`)
         .then((response) => {
           const contentType = response.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
@@ -35,7 +35,7 @@ export default function LogModal({
             fats: getNutrient(data.nutrition.nutrients, "Fat"),
             sugars: getNutrient(data.nutrition.nutrients, "Sugar"),
           };
-          fetch(`${baseUrl}/food`, {
+          fetch(`${API_BASE_URL}/food`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(newFoodItem),
@@ -69,12 +69,12 @@ export default function LogModal({
         </button>
         {itemResults &&
           itemResults.map((item) => {
-            console.log(item);
             return (
-              <button key={item.id} onClick={() => handleButtonClick(item)}>
-                {" "}
-                {item.name}{" "}
-              </button>
+              <div key={item.id}>
+                <button onClick={() => handleButtonClick(item)}>
+                  {item.name}
+                </button>
+              </div>
             );
           })}
       </div>

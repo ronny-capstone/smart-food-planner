@@ -1,3 +1,4 @@
+const { SIGNUP_PATH } = require("../utils/backend_paths.jsx");
 const sqlite3 = require("sqlite3");
 const express = require("express");
 const bcrypt = require("bcrypt");
@@ -10,7 +11,7 @@ const dbPath = path.resolve(__dirname, "../db/fridge.db");
 const db = new sqlite3.Database(dbPath);
 
 // Signup Route
-authRoutes.post("/signup", (req, res) => {
+authRoutes.post(SIGNUP_PATH, (req, res) => {
   // Case-insensitive username
   const username = req.body.username.toLowerCase();
   const password = req.body.password;
@@ -52,7 +53,7 @@ authRoutes.post("/signup", (req, res) => {
             if (err) {
               return res
                 .status(StatusCodes.INTERNAL_SERVER_ERROR)
-                .send("Error inserting into table");
+                .send("Unable to sign up. Please try again");
             }
           }
         );
