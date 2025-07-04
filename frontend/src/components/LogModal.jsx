@@ -36,13 +36,24 @@ export default function LogModal({
             fats: getNutrient(data.nutrition.nutrients, "Fat"),
             sugars: getNutrient(data.nutrition.nutrients, "Sugar"),
           };
+
+          // Try to add to database with duplicate handling
           fetch(`${baseUrl}/food`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(newFoodItem),
           })
-            .then((res) => res.json())
+            .then((res) => {
+              if (res.status === 409) {
+                return res.json().then((err) => {
+                  alert("Duplicate food item: ", err.existingItem.name);
+                  throw new Error("Duplicate handled");
+                });
+              }
+              return res.json();
+            })
             .then((data) => {
+              setItemResults([]);
               handleItemChosen(data);
               onClose();
             })

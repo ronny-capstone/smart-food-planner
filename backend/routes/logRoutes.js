@@ -22,7 +22,6 @@ logRoutes.post("/", (req, res) => {
     db.run(
       `INSERT INTO consumption_logs (user_id, item_id, servings, date_logged) VALUES (?, ?, ?, ?)`,
       [user_id, item_id, servings, date_logged],
-      [user_id, item_id, servings, date_logged],
       function (err) {
         if (err) {
           return res
