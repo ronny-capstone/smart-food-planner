@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { API_BASE_URL } from "../utils/api";
 
 export default function LogModal({
   children,
@@ -7,7 +8,6 @@ export default function LogModal({
   handleItemChosen,
   setItemResults,
 }) {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const getNutrient = (nutrients, name) => {
     const nutrient = nutrients.find((n) => n.name === name);
@@ -18,7 +18,7 @@ export default function LogModal({
     setItemResults("");
     try {
       // Get nutritional information for the chosen item
-      fetch(`${baseUrl}/food/nutrition?itemId=${item.id}`)
+      fetch(`${API_BASE_URL}/food/nutrition?itemId=${item.id}`)
         .then((response) => {
           const contentType = response.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
@@ -38,7 +38,7 @@ export default function LogModal({
           };
 
           // Try to add to database with duplicate handling
-          fetch(`${baseUrl}/food`, {
+          fetch(`${API_BASE_URL}/food`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(newFoodItem),
