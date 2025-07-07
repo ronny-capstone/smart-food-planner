@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { getDaysUntilExpiration } from "../utils/dateUtils";
 import { API_BASE_URL } from "../utils/api";
-import { GROCERY_PATH } from "../utils/paths";
+import { AUTH_PATH, GROCERY_PATH } from "../utils/paths";
 
 export default function GroceryList() {
   const [groceries, setGroceries] = useState([]);
@@ -13,6 +13,7 @@ export default function GroceryList() {
   const [groceryToUpdate, setGroceryToUpdate] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
+  // When component first loads, fetch grocies
   useEffect(() => {
     fetchCurrentUser();
   }, []);
@@ -28,11 +29,11 @@ export default function GroceryList() {
         }
       })
       .then((data) => {
-        if (data && data.user_id) {
+        if (data.authenticated && data.user_id) {
           setCurrentUser(data.user_id);
           fetchGroceries(data.user_id);
         } else {
-          console.log("No user_id in response");
+          console.log("User not logged in:", data.message);
         }
       })
       .catch((err) => {
@@ -60,11 +61,7 @@ export default function GroceryList() {
   };
 
   const handleGroceryAdded = (createdGrocery) => {
-    const newGrocery = {
-      ...createdGrocery.item,
-      food_name: createdGrocery.item.name,
-    };
-    setGroceries((prevGroceries) => [newGrocery, ...prevGroceries]);
+    setGroceries((prevGroceries) => [createdGrocery.item, ...prevGroceries]);
 
     setActiveModal(null);
   };

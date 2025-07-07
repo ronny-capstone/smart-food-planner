@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../utils/api";
+import { AUTH_PATH, SIGNUP_PATH, LOGIN_PATH } from "../utils/paths";
 
 export default function UserAuth({ onAuth }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
-  const AUTH_PATH = "/auth";
-  const SIGNUP_PATH = "/signup";
-  const LOGIN_PATH = "/login";
 
-  // Check if user it already logged in
+  // Check if user it already logged in when renders
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -23,8 +21,14 @@ export default function UserAuth({ onAuth }) {
       .then((response) => {
         // User is already logged in
         if (response.ok) {
+          return response.json();
+        }
+      })
+      .then((data) => {
+        if (data.authenticated) {
           onAuth();
         }
+        // If user not authenticated, stay on login form
       })
       .catch((err) => {
         console.log("Not logged in:", err);
@@ -82,14 +86,14 @@ export default function UserAuth({ onAuth }) {
 
   return (
     <div>
-      <h1> Smart Food Tracker </h1>
-      <h3> Track your food, manage your kitchen </h3>
+      <h1>Smart Food Tracker</h1>
+      <h3>Track your food, manage your kitchen</h3>
 
-      <p> {isSignUp ? "Sign up" : "Log in"} </p>
+      <p>{isSignUp ? "Sign up" : "Log in"}</p>
 
       <form onSubmit={handleSubmit}>
         <div>
-          <p> Username </p>
+          <p>Username</p>
           <input
             type="text"
             value={username}
@@ -99,7 +103,7 @@ export default function UserAuth({ onAuth }) {
         </div>
 
         <div>
-          <p> Password </p>
+          <p>Password</p>
           <input
             type="password"
             value={password}
@@ -115,12 +119,8 @@ export default function UserAuth({ onAuth }) {
       </form>
       <div>
         <p>
-          {" "}
-          {isSignUp
-            ? "Already have an account?"
-            : "Don't have an account?"}{" "}
+          {isSignUp ? "Already have an account?" : "Don't have an account?"}
           <button onClick={toggleMode}>
-            {" "}
             {isSignUp ? "Sign in" : "Sign up"}{" "}
           </button>
         </p>

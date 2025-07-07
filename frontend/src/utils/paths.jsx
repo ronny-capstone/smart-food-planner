@@ -6,3 +6,6 @@ export const LOG_PATH = "/log";
 export const FOOD_PATH = "/food";
 export const GROCERY_PATH = "/grocery";
 export const AUTH_PATH = "/auth";
+export const LOGIN_PATH = "/login";
+export const ME_PATH = "/me";
+export const LOGOUT_PATH = "/logout";
