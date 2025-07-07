@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
+import { FOOD_PATH } from "../utils/paths";
 
 export default function LogForm({
   handleLogAdded,
@@ -15,7 +16,6 @@ export default function LogForm({
   const [foodItem, setFoodItem] = useState("");
   const [foodItems, setFoodItems] = useState([]);
   const [servings, setServings] = useState("");
-  const FOOD_PATH = "/food";
 
   useEffect(() => {
     fetch(`${API_BASE_URL}${FOOD_PATH}`)
@@ -121,17 +121,11 @@ export default function LogForm({
   return (
     <form onSubmit={handleSubmit}>
       <div>
-        {type === "add" && (
-          <h1>Add New Log</h1>
-        )}
-        {type === "update" && (
-          <h1>Update Log</h1>
-        )}
+        {type === "add" && <h1>Add New Log</h1>}
+        {type === "update" && <h1>Update Log</h1>}
 
         <div>
-          <label>
-            Date logged (defaulted to today):
-          </label>
+          <label>Date logged (defaulted to today):</label>
           <input
             name="dateLogged"
             type="date"
@@ -149,7 +143,7 @@ export default function LogForm({
             <option value=""> Select a food item </option>
             {foodItems.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.name}
+                { item.name }
               </option>
             ))}
           </select>
@@ -163,11 +157,7 @@ export default function LogForm({
           />
         </div>
         <div>
-          <button
-            type="submit"
-          >
-            Submit
-          </button>
+          <button type="submit">Submit</button>
         </div>
       </div>
     </form>

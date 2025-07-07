@@ -34,7 +34,7 @@ export default function FoodItemForm({ handleItemAdded }) {
           }
         })
         .catch((err) => {
-          console.log(err.message);
+          alert("Error: ", err.message);
         });
     } catch (err) {
       console.log("Failed to submit form:", err.message);
