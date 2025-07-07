@@ -1,15 +1,18 @@
 import GroceryForm from "./GroceryForm";
+import GroceryCard from "./GroceryCard";
 import LogModal from "./LogModal";
 import { useEffect } from "react";
 import { useState } from "react";
+import { getDaysUntilExpiration } from "../utils/dateUtils";
 import { API_BASE_URL } from "../utils/api";
+import { GROCERY_PATH } from "../utils/paths";
 
 export default function GroceryList() {
   const [groceries, setGroceries] = useState([]);
   const [activeModal, setActiveModal] = useState(false);
   const [groceryToUpdate, setGroceryToUpdate] = useState(null);
-  const GROCERY_PATH = "/grocery";
 
+  // When component first loads, fetch grocies
   useEffect(() => {
     fetchGroceries();
   }, []);
@@ -28,13 +31,14 @@ export default function GroceryList() {
         }
       })
       .catch((err) => {
-        console.log("Failed to fetch grocery items: ", err);
+        alert("Failed to fetch grocery items: ", err);
         setGroceries([]);
       });
   };
 
   const handleGroceryAdded = (createdGrocery) => {
     setGroceries((prevGroceries) => [createdGrocery.item, ...prevGroceries]);
+
     setActiveModal(null);
   };
 
@@ -78,7 +82,7 @@ export default function GroceryList() {
           alert("Error deleting grocery item. Please try again");
         });
     } catch (err) {
-      console.log("Failed to delete grocery item:", err.message);
+      alert("Failed to delete grocery item:", err.message);
     }
   };
 
@@ -88,7 +92,7 @@ export default function GroceryList() {
   };
 
   const openUpdateModal = (grocery) => {
-    setActiveModal(`update-${grocery.id}`);
+    setActiveModal("update");
     setGroceryToUpdate(grocery);
   };
 
@@ -97,53 +101,15 @@ export default function GroceryList() {
     setGroceryToUpdate(null);
   };
 
-  const formatDateString = (dateString) => {
-    const [year, month, day] = dateString.split("-");
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const getDaysUntilExpiration = (expirationDate) => {
-    const today = new Date();
-    const expireDate = new Date(expirationDate);
-    const timeDifference = expireDate.getTime() - today.getTime();
-    const daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
-    return daysDifference;
-  };
-
-  const getExpirationStatus = (expirationDate) => {
-    const days = getDaysUntilExpiration(expirationDate);
-    if (days < 0) {
-      return "Expired";
-    } else if (days <= 3) {
-      return "Expiring soon";
-    } else if (days <= 7) {
-      return "Expiring this week";
-    }
-    return "Fresh";
-  };
-
-  const getStatusColor = (status) => {
-    if (status === "Expired") {
-      return "bg-red-100 text-red-800 border-red-200";
-    } else if (status === "Expiring soon") {
-      return "bg-orange-100 text-orange-800 border-orange-200";
-    } else if (status === "Expiring this week") {
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    } else {
-      return "bg-green-100 text-green-800 border-green-200";
-    }
-  };
+  // Sort groceries by expiration date
+  const sortedGroceries = groceries.sort(
+    (a, b) => new Date(a.expiration_date) - new Date(b.expiration_date)
+  );
 
   return (
     <div>
       <h1> Grocery List </h1>
-      <button onClick={openAddModal}> Add Grocery Item </button>
+      <button onClick={openAddModal}>Add Grocery Item</button>
 
       {/* Add Modal */}
       {activeModal === "add" && (
@@ -158,46 +124,25 @@ export default function GroceryList() {
         </LogModal>
       )}
 
-      {/* Grocery items */}
+      {/* Main grocery list section */}
       <div className="groceryList">
-        <h2> Your Grocery Items ({groceries.length}) </h2>
-        {groceries.length == 0 && <p> Your grocery list is empty! </p>}
+        <h2>Your Grocery Items ({groceries.length})</h2>
+        {groceries.length == 0 && <p>Your grocery list is empty!</p>}
 
-        {groceries
-          .sort(
-            (a, b) => new Date(a.expiration_date) - new Date(b.expiration_date)
-          )
-          .map((grocery) => {
-            const expirationStatus = getExpirationStatus(
-              grocery.expiration_date
-            );
-            const daysUntil = getDaysUntilExpiration(grocery.expiration_date);
-            return (
-              <div className="groceryCard" key={grocery.id}>
-                <h3 className="grocery-name"> {grocery.food_name}</h3>
-                <p className={getStatusColor(expirationStatus)}>
-                  {expirationStatus === "Expired" &&
-                    `Expired ${Math.abs(daysUntil)} day${
-                      Math.abs(daysUntil) !== 1 ? "s" : ""
-                    } ago`}
-                  {expirationStatus === "Expiring soon" &&
-                    `Expires in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`}
-                  {expirationStatus === "Expiring this week" &&
-                    `Expires in ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`}
-                  {expirationStatus === "Fresh" &&
-                    `Fresh (${daysUntil} days left)`}
-                </p>
-                <p> Added: {formatDateString(grocery.added_date)} </p>
-                <p> Expires: {formatDateString(grocery.expiration_date)} </p>
-                <p> Servings: {grocery.quantity} </p>
+        {sortedGroceries.map((grocery) => {
+          console.log(grocery);
+          return (
+            <GroceryCard
+              key={grocery.id}
+              grocery={grocery}
+              handleEdit={openUpdateModal}
+              handleDelete={handleDelete}
+            />
+          );
+        })}
 
-                <button onClick={() => openUpdateModal(grocery)}> Edit </button>
-                <button onClick={() => handleDelete(grocery)}> Remove </button>
-              </div>
-            );
-          })}
         {/* Update Modal */}
-        {groceryToUpdate && activeModal === `update-${groceryToUpdate.id}` && (
+        {groceryToUpdate && activeModal === "update" && (
           <LogModal onClose={closeModal}>
             <GroceryForm
               handleGroceryAdded={handleGroceryAdded}
@@ -209,39 +154,39 @@ export default function GroceryList() {
           </LogModal>
         )}
 
-        {/* Statistics */}
+        {/* Statistics, only shows if there are groceries */}
         {groceries.length > 0 && (
           <div>
-            <h3> Quick Overview: </h3>
-            <p> Total items: {groceries.length} </p>
+            <h3>Quick Overview:</h3>
+            <p>Total items: {groceries.length}</p>
             <p>
-              {" "}
-              Expiring soon:{" "}
+              {/* Count items expiring soon (<=3 days remaining) */}
+              Expiring soon:
               {
                 groceries.filter(
                   (g) =>
                     getDaysUntilExpiration(g.expiration_date) <= 3 &&
                     getDaysUntilExpiration(g.expiration_date) >= 0
                 ).length
-              }{" "}
+              }
             </p>
             <p>
-              {" "}
-              Expired:{" "}
+              {/* Count expired items (<0 days remaining) */}
+              Expired:
               {
                 groceries.filter(
                   (g) => getDaysUntilExpiration(g.expiration_date) < 0
                 ).length
-              }{" "}
+              }
             </p>
+            {/* Count fresh items (>7 days remaining) */}
             <p>
-              {" "}
-              Fresh items:{" "}
+              Fresh items:
               {
                 groceries.filter(
                   (g) => getDaysUntilExpiration(g.expiration_date) > 7
                 ).length
-              }{" "}
+              }
             </p>
           </div>
         )}

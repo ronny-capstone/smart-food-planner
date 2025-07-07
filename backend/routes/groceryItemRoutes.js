@@ -12,7 +12,7 @@ const db = new sqlite3.Database(dbPath);
 groceryRoutes.get("/", async (req, res) => {
   const userId = req.query.user_id;
   db.all(
-    `SELECT gi.*, fi.name as food_name, fi.calories, fi.protein, fi.carbs, fi.fats, fi.sugars FROM grocery_items gi JOIN food_items fi ON gi.item_id = fi.id WHERE gi.user_id = ? ORDER BY gi.added_date DESC`,
+    `SELECT * FROM grocery_items WHERE user_id = ?`,
     [userId],
     (err, rows) => {
       if (err) {
@@ -167,7 +167,7 @@ groceryRoutes.delete("/:id", async (req, res) => {
         if (err) {
           return res
             .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .json({ error: "Error deleeting grocery item" });
+            .json({ error: "Error deleting grocery item" });
         }
 
         return res.status(StatusCodes.OK).json({
@@ -180,34 +180,6 @@ groceryRoutes.delete("/:id", async (req, res) => {
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: "An error occurred while deleting a grocery item" });
-  }
-});
-
-// Get items that are expiring soon
-groceryRoutes.get(`${EXPIRING_PATH}/:days`, async (req, res) => {
-  try {
-    const { days } = req.params;
-    const userId = req.query.user_id;
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + parseInt(days));
-    const futureDateString = futureDate.toISOString().split("T")[0];
-    db.all(
-      `SELECT gi.*, fi.name as food_name FROM grocery_items gi JOIN food_items fi ON gi.item_id = fi.id WHERE gi.user_id = ? AND gi.expiration_date <= ? AND gi.expiration_date >= date('now') ORDER BY gi.expiration_date ASC`,
-      [userId, futureDateString],
-      (err, rows) => {
-        if (err) {
-          return res
-            .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .json({ message: "Error fetching item", error: err.message });
-        }
-        return res.status(StatusCodes.OK).json(rows);
-      }
-    );
-  } catch (err) {
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "An error occurred while fetching expired items",
-      error: err.message,
-    });
   }
 });
 

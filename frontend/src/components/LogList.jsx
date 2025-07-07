@@ -2,14 +2,13 @@ import LogModal from "./LogModal";
 import LogForm from "./LogForm";
 import { API_BASE_URL } from "../utils/api";
 import { useEffect, useState } from "react";
+import { LOG_PATH, FOOD_PATH } from "../utils/paths";
 
 export default function LogList() {
   const [logs, setLogs] = useState([]);
   const [activeModal, setActiveModal] = useState(null);
   const [logToUpdate, setLogToUpdate] = useState(null);
   const [foodItems, setFoodItems] = useState([]);
-  const LOG_PATH = "/log";
-  const FOOD_PATH = "/food";
 
   useEffect(() => {
     fetch(`${API_BASE_URL}${LOG_PATH}`)
@@ -101,7 +100,7 @@ export default function LogList() {
 
   return (
     <div>
-      <button onClick={openAddModal}> Add new log </button>
+      <button onClick={openAddModal}>Add new log</button>
       {activeModal === "add" && (
         <LogModal onClose={closeModal}>
           {" "}
@@ -115,7 +114,7 @@ export default function LogList() {
         </LogModal>
       )}
       <div className="logList">
-        {logs.length == 0 && <p> No logs yet! </p>}
+        {logs.length == 0 && <p>No logs yet!</p>}
         {/* Sorted by most recently added  */}
         {logs
           .sort((a, b) => b.id - a.id)
@@ -123,13 +122,14 @@ export default function LogList() {
             return (
               <div className="logCard" key={log.id}>
                 <h3 className="log-title">
-                  {" "}
-                  Log for {formatDateString(log.date_logged)}{" "}
+                  Log for {formatDateString(log.date_logged)}
                 </h3>
-                <p className="log-item"> Food item: {getFoodNameById(log.item_id)} </p>
+                <p className="log-item">
+                  Food item: {getFoodNameById(log.item_id)}
+                </p>
                 <p className="log-servings"> Servings: {log.servings} </p>
-                <button onClick={() => openUpdateModal(log)}> Update </button>
-                <button onClick={() => handleDelete(log)}> Delete </button>
+                <button onClick={() => openUpdateModal(log)}>Update</button>
+                <button onClick={() => handleDelete(log)}>Delete</button>
                 {activeModal === `update-${log.id}` && (
                   <LogModal onClose={closeModal}>
                     {" "}

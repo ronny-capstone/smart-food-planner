@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
+import { GROCERY_PATH, FOOD_PATH } from "../utils/paths";
 
 export default function GroceryForm({
   handleGroceryAdded,
@@ -15,8 +16,6 @@ export default function GroceryForm({
     new Date().toISOString().split("T")[0]
   );
   const [foodItems, setFoodItems] = useState([]);
-  const FOOD_PATH = "/food";
-  const GROCERY_PATH = "/grocery";
 
   // Fetch food items for dropdown options
   useEffect(() => {
