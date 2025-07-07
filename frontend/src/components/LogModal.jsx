@@ -8,7 +8,6 @@ export default function LogModal({
   handleItemChosen,
   setItemResults,
 }) {
-
   const getNutrient = (nutrients, name) => {
     const nutrient = nutrients.find((n) => n.name === name);
     return nutrient ? nutrient.amount : 0;
@@ -18,7 +17,7 @@ export default function LogModal({
     setItemResults("");
     try {
       // Get nutritional information for the chosen item
-      fetch(`${API_BASE_URL}/food/nutrition?itemId=${item.id}`)
+      fetch(`${API_BASE_URL}/food/nutrition?itemId=${item.id}&amount=1`)
         .then((response) => {
           const contentType = response.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
@@ -36,8 +35,6 @@ export default function LogModal({
             fats: getNutrient(data.nutrition.nutrients, "Fat"),
             sugars: getNutrient(data.nutrition.nutrients, "Sugar"),
           };
-
-          // Try to add to database with duplicate handling
           fetch(`${API_BASE_URL}/food`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -84,8 +81,7 @@ export default function LogModal({
             return (
               <div key={item.id}>
                 <button onClick={() => handleButtonClick(item)}>
-                  {" "}
-                  {item.name}{" "}
+                  { item.name }
                 </button>
               </div>
             );
