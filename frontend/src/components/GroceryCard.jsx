@@ -37,7 +37,7 @@ export default function GroceryCard({ grocery, handleEdit, handleDelete }) {
 
   return (
     <div className="groceryCard">
-      <h3 className="grocery-name">{grocery.food_name}</h3>
+      <h3 className="grocery-name">{grocery.name}</h3>
       <p className={getStatusColor(expirationStatus)}> {getStatusMessage()} </p>
       <p>Added: {formatDateString(grocery.added_date)}</p>
       <p>Expires: {formatDateString(grocery.expiration_date)}</p>

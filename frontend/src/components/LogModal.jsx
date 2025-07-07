@@ -8,7 +8,6 @@ export default function LogModal({
   handleItemChosen,
   setItemResults,
 }) {
-
   const getNutrient = (nutrients, name) => {
     const nutrient = nutrients.find((n) => n.name === name);
     return nutrient ? nutrient.amount : 0;

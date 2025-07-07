@@ -8,11 +8,15 @@ const dbPath = path.resolve(__dirname, "../db/fridge.db");
 const EXPIRING_PATH = "/expiring";
 const db = new sqlite3.Database(dbPath);
 
+const checkInvalidVariable = (variable) => {
+  return variable === undefined || variable === null || variable === "";
+};
+
 // Get all grocery items for a user
 groceryRoutes.get("/", async (req, res) => {
   const userId = req.query.user_id;
   db.all(
-    `SELECT gi.*, fi.name as food_name, fi.calories, fi.protein, fi.carbs, fi.fats, fi.sugars FROM grocery_items gi JOIN food_items fi ON gi.item_id = fi.id WHERE gi.user_id = ? ORDER BY gi.added_date DESC`,
+    `SELECT * FROM grocery_items WHERE user_id = ?`,
     [userId],
     (err, rows) => {
       if (err) {
@@ -32,16 +36,11 @@ groceryRoutes.post("/", async (req, res) => {
   const added_date = new Date().toISOString().split("T")[0];
 
   if (
-    user_id === undefined ||
-    user_id === null ||
-    item_id === undefined ||
-    item_id === null ||
-    name === undefined ||
-    name === null ||
-    quantity === undefined ||
-    quantity === null ||
-    expiration_date === undefined ||
-    expiration_date === null
+    checkInvalidVariable(user_id) ||
+    checkInvalidVariable(item_id) ||
+    checkInvalidVariable(name) ||
+    checkInvalidVariable(quantity) ||
+    checkInvalidVariable(expiration_date)
   ) {
     return res
       .status(StatusCodes.BAD_REQUEST)
@@ -180,34 +179,6 @@ groceryRoutes.delete("/:id", async (req, res) => {
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: "An error occurred while deleting a grocery item" });
-  }
-});
-
-// Get items that are expiring soon
-groceryRoutes.get(`${EXPIRING_PATH}/:days`, async (req, res) => {
-  try {
-    const { days } = req.params;
-    const userId = req.query.user_id;
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + parseInt(days));
-    const futureDateString = futureDate.toISOString().split("T")[0];
-    db.all(
-      `SELECT gi.*, fi.name as food_name FROM grocery_items gi JOIN food_items fi ON gi.item_id = fi.id WHERE gi.user_id = ? AND gi.expiration_date <= ? AND gi.expiration_date >= date('now') ORDER BY gi.expiration_date ASC`,
-      [userId, futureDateString],
-      (err, rows) => {
-        if (err) {
-          return res
-            .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .json({ message: "Error fetching item", error: err.message });
-        }
-        return res.status(StatusCodes.OK).json(rows);
-      }
-    );
-  } catch (err) {
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "An error occurred while fetching expired items",
-      error: err.message,
-    });
   }
 });
 

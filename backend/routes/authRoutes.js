@@ -1,4 +1,9 @@
-const { SIGNUP_PATH, LOGIN_PATH, ME_PATH, LOGOUT_PATH } = require("../utils/backend_paths.jsx");
+const {
+  SIGNUP_PATH,
+  LOGIN_PATH,
+  ME_PATH,
+  LOGOUT_PATH,
+} = require("../utils/backend_paths.jsx");
 const sqlite3 = require("sqlite3");
 const express = require("express");
 const bcrypt = require("bcrypt");
@@ -133,7 +138,9 @@ authRoutes.post(LOGIN_PATH, async (req, res) => {
 // Check if user is logged in
 authRoutes.get(ME_PATH, async (req, res) => {
   if (!req.session.userId) {
-    return res.status(StatusCodes.UNAUTHORIZED).send("Not logged in");
+    return res
+      .status(StatusCodes.OK)
+      .json({ authenticated: false, message: "Not logged in" });
   }
 
   try {
@@ -144,25 +151,27 @@ authRoutes.get(ME_PATH, async (req, res) => {
         if (err) {
           return res
             .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .send("Error getting user data");
+            .json({ authenticated: false, message: "Error getting user data" });
         }
         if (row) {
           res.status(StatusCodes.OK).json({
+            authenticated: true,
             user_id: req.session.userId,
             username: row.username,
           });
         } else {
           res
-            .status(StatusCodes.UNAUTHORIZED)
-            .json({ message: "User not found" });
+            .status(StatusCodes.OK)
+            .json({ authenticated: false, message: "User not found" });
         }
       }
     );
   } catch (error) {
     console.error(error);
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .send("Error fetching user session data");
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      authenticated: false,
+      message: "Error fetching user session data",
+    });
   }
 });
 
