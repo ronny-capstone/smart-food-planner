@@ -8,9 +8,12 @@ const axios = require("axios");
 const apiKey = process.env.SPOONACULAR_API_KEY;
 const baseUrl = process.env.SPOONACULAR_BASE_URL;
 const dbPath = path.resolve(__dirname, "../db/fridge.db");
-const SEARCH_PATH = "/search";
-const NUTRITION_PATH = "/nutrition";
+const { SEARCH_PATH, NUTRITION_PATH } = require("../../frontend/src/utils/paths.jsx");
 const db = new sqlite3.Database(dbPath);
+
+const checkInvalidVariable = (variable) => {
+  return variable === undefined || variable === null || variable === "";
+};
 
 // Get all food items
 foodRoutes.get("/", async (req, res) => {
@@ -47,7 +50,7 @@ foodRoutes.get(SEARCH_PATH, async (req, res) => {
 
 // Get nutritional information for food item
 foodRoutes.get(NUTRITION_PATH, async (req, res) => {
-  const itemId = req.query.itemId;
+  const { itemId, amount } = req.query;
   if (!itemId) {
     return res
       .status(StatusCodes.BAD_REQUEST)
@@ -55,7 +58,7 @@ foodRoutes.get(NUTRITION_PATH, async (req, res) => {
   }
   try {
     const response = await axios.get(
-      `${baseUrl}/ingredients/${itemId}/information?amount=1&apiKey=${apiKey}`
+      `${baseUrl}/ingredients/${itemId}/information?amount=${amount}&apiKey=${apiKey}`
     );
 
     return res.json(response.data);
@@ -70,19 +73,12 @@ foodRoutes.get(NUTRITION_PATH, async (req, res) => {
 foodRoutes.post("/", async (req, res) => {
   const { name, calories, protein, carbs, fats, sugars } = req.body;
   if (
-    name === undefined ||
-    name === null ||
-    name === "" ||
-    calories === undefined ||
-    calories === null ||
-    protein === undefined ||
-    protein === null ||
-    carbs === undefined ||
-    carbs === null ||
-    fats === undefined ||
-    fats === null ||
-    sugars === undefined ||
-    sugars === null
+    checkInvalidVariable(name) ||
+    checkInvalidVariable(calories) ||
+    checkInvalidVariable(protein) ||
+    checkInvalidVariable(carbs) ||
+    checkInvalidVariable(fats) ||
+    checkInvalidVariable(sugars)
   ) {
     return res
       .status(StatusCodes.BAD_REQUEST)

@@ -188,7 +188,7 @@ groceryRoutes.get(`${EXPIRING_PATH}/:days`, async (req, res) => {
   try {
     const { days } = req.params;
     const userId = req.query.user_id;
-    const futureDate = newDate();
+    const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + parseInt(days));
     const futureDateString = futureDate.toISOString().split("T")[0];
     db.all(

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
+import { FOOD_PATH } from "../utils/paths";
 
 export default function LogForm({
   handleLogAdded,
@@ -16,7 +17,18 @@ export default function LogForm({
   const [foodItem, setFoodItem] = useState("");
   const [foodItems, setFoodItems] = useState([]);
   const [servings, setServings] = useState("");
-  const FOOD_PATH = "/food";
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}${FOOD_PATH}`)
+      .then((response) => response.json())
+      .then((data) => {
+        setFoodItems(data);
+      })
+      .catch((err) => {
+        console.log("Failed to fetch food items:", err);
+        setFoodItems([]);
+      });
+  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}${FOOD_PATH}`)

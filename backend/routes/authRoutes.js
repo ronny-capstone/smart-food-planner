@@ -1,3 +1,4 @@
+const { SIGNUP_PATH, LOGIN_PATH, ME_PATH, LOGOUT_PATH } = require("../utils/backend_paths.jsx");
 const sqlite3 = require("sqlite3");
 const express = require("express");
 const bcrypt = require("bcrypt");
@@ -5,10 +6,6 @@ const path = require("path");
 const StatusCodes = require("http-status-codes").StatusCodes;
 
 const authRoutes = express.Router();
-const SIGNUP_PATH = "/signup";
-const LOGIN_PATH = "/login";
-const ME_PATH = "/me";
-const LOGOUT_PATH = "/logout";
 const dbPath = path.resolve(__dirname, "../db/fridge.db");
 
 const db = new sqlite3.Database(dbPath);
