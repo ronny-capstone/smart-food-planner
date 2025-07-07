@@ -84,7 +84,7 @@ groceryRoutes.post("/", async (req, res) => {
 groceryRoutes.patch("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { quantity, expiration_date } = req.body;
+    const { quantity, expiration_date, item_id, name } = req.body;
     const updates = [];
     const values = [];
 
@@ -96,6 +96,16 @@ groceryRoutes.patch("/:id", async (req, res) => {
     if (expiration_date !== undefined) {
       updates.push("expiration_date = ?");
       values.push(expiration_date);
+    }
+
+    if (item_id !== undefined) {
+      updates.push("item_id = ?");
+      values.push(item_id);
+    }
+
+    if (name !== undefined) {
+      updates.push("name = ?");
+      values.push(name);
     }
 
     if (updates.length === 0) {
@@ -114,21 +124,18 @@ groceryRoutes.patch("/:id", async (req, res) => {
             error: err.message,
           });
         }
-        db.get(
-          `SELECT gi.*, fi.name as food_name FROM grocery_items gi JOIN food_items fi ON gi.item_id = fi.id WHERE gi.id = ?`,
-          [id],
-          (err, row) => {
-            if (err) {
-              return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                message: "Error fetching updated record",
-                error: err.message,
-              });
-            }
-            return res
-              .status(StatusCodes.OK)
-              .json({ message: "Updated grocery item", item: row });
+        // Get updated grocery item
+        db.get(`SELECT * FROM grocery_items WHERE id = ?`, [id], (err, row) => {
+          if (err) {
+            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+              message: "Error fetching updated record",
+              error: err.message,
+            });
           }
-        );
+          return res
+            .status(StatusCodes.OK)
+            .json({ message: "Updated grocery item", item: row });
+        });
       }
     );
   } catch (err) {
@@ -160,7 +167,7 @@ groceryRoutes.delete("/:id", async (req, res) => {
         if (err) {
           return res
             .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .json({ error: "Error deleeting grocery item" });
+            .json({ error: "Error deleting grocery item" });
         }
 
         return res.status(StatusCodes.OK).json({

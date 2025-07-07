@@ -6,6 +6,9 @@ const StatusCodes = require("http-status-codes").StatusCodes;
 
 const authRoutes = express.Router();
 const SIGNUP_PATH = "/signup";
+const LOGIN_PATH = "/login";
+const ME_PATH = "/me";
+const LOGOUT_PATH = "/logout";
 const dbPath = path.resolve(__dirname, "../db/fridge.db");
 
 const db = new sqlite3.Database(dbPath);
@@ -69,7 +72,7 @@ authRoutes.post(SIGNUP_PATH, (req, res) => {
 });
 
 // Login Route
-authRoutes.post("/login", async (req, res) => {
+authRoutes.post(LOGIN_PATH, async (req, res) => {
   const username = req.body.username.toLowerCase();
   const password = req.body.password;
 
@@ -131,7 +134,7 @@ authRoutes.post("/login", async (req, res) => {
 });
 
 // Check if user is logged in
-authRoutes.get("/me", async (req, res) => {
+authRoutes.get(ME_PATH, async (req, res) => {
   if (!req.session.userId) {
     return res.status(StatusCodes.UNAUTHORIZED).send("Not logged in");
   }
@@ -146,9 +149,16 @@ authRoutes.get("/me", async (req, res) => {
             .status(StatusCodes.INTERNAL_SERVER_ERROR)
             .send("Error getting user data");
         }
-        res.status(StatusCodes.OK).json({
-          username: row.username,
-        });
+        if (row) {
+          res.status(StatusCodes.OK).json({
+            user_id: req.session.userId,
+            username: row.username,
+          });
+        } else {
+          res
+            .status(StatusCodes.UNAUTHORIZED)
+            .json({ message: "User not found" });
+        }
       }
     );
   } catch (error) {
@@ -160,7 +170,7 @@ authRoutes.get("/me", async (req, res) => {
 });
 
 // Logout Route
-authRoutes.post("/logout", (req, res) => {
+authRoutes.post(LOGOUT_PATH, (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       return res

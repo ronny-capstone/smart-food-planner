@@ -47,16 +47,21 @@ logRoutes.post("/", (req, res) => {
   }
 });
 
-// Get all log entries
-logRoutes.get("/", async (req, res) => {
-  db.all("SELECT * FROM consumption_logs", async (err, rows) => {
-    if (err) {
-      return res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .send("Database error");
+// Get all log entries for user
+logRoutes.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  db.all(
+    "SELECT * FROM consumption_logs WHERE user_id = ?",
+    [id],
+    async (err, rows) => {
+      if (err) {
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .send("Database error");
+      }
+      return res.status(StatusCodes.OK).json(rows);
     }
-    return res.status(StatusCodes.OK).json(rows);
-  });
+  );
 });
 
 // Get specific log entry by id

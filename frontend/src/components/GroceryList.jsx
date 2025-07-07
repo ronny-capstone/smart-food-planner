@@ -8,15 +8,39 @@ export default function GroceryList() {
   const [groceries, setGroceries] = useState([]);
   const [activeModal, setActiveModal] = useState(false);
   const [groceryToUpdate, setGroceryToUpdate] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const GROCERY_PATH = "/grocery";
+  const AUTH_PATH = "/auth";
 
   useEffect(() => {
-    fetchGroceries();
+    fetchCurrentUser();
   }, []);
 
-  const fetchGroceries = () => {
-    // TODO: deal with user id
-    fetch(`${API_BASE_URL}${GROCERY_PATH}?user_id=1`)
+  const fetchCurrentUser = () => {
+    fetch(`${API_BASE_URL}${AUTH_PATH}/me`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+      })
+      .then((data) => {
+        if (data && data.user_id) {
+          setCurrentUser(data.user_id);
+          fetchGroceries(data.user_id);
+        } else {
+          console.log("No user_id in response");
+        }
+      })
+      .catch((err) => {
+        console.log("Failed to get current user:", err);
+      });
+  };
+
+  const fetchGroceries = (userId) => {
+    fetch(`${API_BASE_URL}${GROCERY_PATH}?user_id=${userId}`)
       .then((response) => {
         return response.json();
       })
@@ -40,20 +64,29 @@ export default function GroceryList() {
   };
 
   const handleGroceryUpdated = (updatedGrocery) => {
-    console.log(updatedGrocery);
-    console.log(groceries);
     setGroceries((prevGroceries) =>
-      prevGroceries.map((grocery) =>
-        grocery.id === updatedGrocery.item.id ? updatedGrocery.item : grocery
-      )
+      prevGroceries.map((grocery) => {
+        if (grocery.id === updatedGrocery.item.id) {
+          return {
+            ...grocery,
+            item_id: updatedGrocery.item.id,
+            food_name: updatedGrocery.item.name,
+            quantity: updatedGrocery.item.quantity,
+            expirationDate: updatedGrocery.item.expiration_date,
+          };
+        }
+        return grocery;
+      })
     );
+    // Refetch
+    fetchGroceries(currentUser);
     setActiveModal(null);
     setGroceryToUpdate(null);
   };
 
-  const handleDelete = async (groceryToDelete) => {
+  const handleDelete = (groceryToDelete) => {
     try {
-      await fetch(`${API_BASE_URL}${GROCERY_PATH}/${groceryToDelete.id}`, {
+      fetch(`${API_BASE_URL}${GROCERY_PATH}/${groceryToDelete.id}`, {
         method: "DELETE",
       })
         .then((response) => {
@@ -100,7 +133,6 @@ export default function GroceryList() {
     });
   };
 
-  // TODO: check this math
   const getDaysUntilExpiration = (expirationDate) => {
     const today = new Date();
     const expireDate = new Date(expirationDate);
@@ -147,6 +179,7 @@ export default function GroceryList() {
             setShowModal={closeModal}
             type="add"
             groceryToUpdate={null}
+            currentUser={currentUser}
           />
         </LogModal>
       )}
@@ -198,6 +231,7 @@ export default function GroceryList() {
               setShowModal={closeModal}
               type="update"
               groceryToUpdate={groceryToUpdate}
+              currentUser={currentUser}
             />
           </LogModal>
         )}
