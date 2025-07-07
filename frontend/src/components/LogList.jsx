@@ -2,12 +2,12 @@ import LogModal from "./LogModal";
 import LogForm from "./LogForm";
 import { API_BASE_URL } from "../utils/api";
 import { useEffect, useState } from "react";
+import { LOG_PATH } from "../utils/paths";
 
 export default function LogList() {
   const [logs, setLogs] = useState([]);
   const [activeModal, setActiveModal] = useState(null);
   const [logToUpdate, setLogToUpdate] = useState(null);
-  const LOG_PATH = "/log";
 
   useEffect(() => {
     fetch(`${API_BASE_URL}${LOG_PATH}`)
@@ -57,7 +57,7 @@ export default function LogList() {
     }
   };
 
-  const openAddModal = (log) => {
+  const openAddModal = () => {
     setActiveModal("add");
     setLogToUpdate(null);
   };
