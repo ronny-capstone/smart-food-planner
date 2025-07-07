@@ -4,7 +4,7 @@ import { API_BASE_URL } from "../utils/api";
 export default function FoodItemForm({ handleItemAdded }) {
   const [foodItem, setFoodItem] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (foodItem === "") {
       alert("Please fill out all fields.");
@@ -34,7 +34,7 @@ export default function FoodItemForm({ handleItemAdded }) {
           }
         })
         .catch((err) => {
-          console.log(err.message);
+          alert("Error: ", err.message);
         });
     } catch (err) {
       console.log("Failed to submit form:", err.message);
