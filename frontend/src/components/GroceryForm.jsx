@@ -163,7 +163,7 @@ export default function GroceryForm({
           )}
         </div>
         <div>
-          <label> Quantity: </label>
+          <label>Quantity:</label>
           <input
             name="quantity"
             value={quantity}
@@ -172,7 +172,7 @@ export default function GroceryForm({
           />
         </div>
         <div>
-          <label> Expiration date:</label>
+          <label>Expiration date:</label>
           <input
             name="expirationDate"
             type="date"
