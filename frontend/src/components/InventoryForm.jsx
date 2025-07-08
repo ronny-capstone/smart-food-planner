@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
-import { GROCERY_PATH, FOOD_PATH } from "../utils/paths";
+import { INVENTORY_PATH, FOOD_PATH } from "../utils/paths";
 
-export default function GroceryForm({
+export default function InventoryForm({
   handleGroceryAdded,
   handleGroceryUpdated,
   setShowModal,
@@ -12,6 +12,10 @@ export default function GroceryForm({
 }) {
   const [foodItem, setFoodItem] = useState("");
   const [quantity, setQuantity] = useState("");
+  // Set default expiration date to today
+  const [expirationDate, setExpirationDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [foodItems, setFoodItems] = useState([]);
 
   // Fetch food items for dropdown options
@@ -27,11 +31,12 @@ export default function GroceryForm({
       });
   }, []);
 
-  // Prepopulate form fields for updates
+  // Update expiration estimate when food item changes
   useEffect(() => {
     if (type === "update" && groceryToUpdate) {
       setFoodItem(groceryToUpdate.item_id.toString());
       setQuantity(groceryToUpdate.quantity.toString());
+      setExpirationDate(groceryToUpdate.expiration_date);
     }
   }, [type, groceryToUpdate]);
 
@@ -45,13 +50,14 @@ export default function GroceryForm({
       return;
     }
     try {
-      fetch(`${API_BASE_URL}${GROCERY_PATH}`, {
+      fetch(`${API_BASE_URL}${INVENTORY_PATH}`, {
         method: "POST",
         body: JSON.stringify({
           user_id: currentUser,
           item_id: parseInt(foodItem),
           name: selectedFood.name,
           quantity: parseInt(quantity),
+          expiration_date: expirationDate,
         }),
         headers: {
           "Content-type": "application/json",
@@ -63,13 +69,14 @@ export default function GroceryForm({
           // Reset form
           setFoodItem("");
           setQuantity("");
+          setExpirationDate("");
           setShowModal(false);
         })
         .catch((err) => {
-          console.log("Failed to add grocery item:", err.message);
+          console.log("Failed to add food item:", err.message);
         });
     } catch (err) {
-      console.log("Failed to add grocery item:", err.message);
+      console.log("Failed to add food item:", err.message);
     }
   };
 
@@ -80,10 +87,11 @@ export default function GroceryForm({
     );
 
     try {
-      fetch(`${API_BASE_URL}${GROCERY_PATH}/${groceryToUpdate.id}`, {
+      fetch(`${API_BASE_URL}${INVENTORY_PATH}/${groceryToUpdate.id}`, {
         method: "PATCH",
         body: JSON.stringify({
           quantity: parseInt(quantity),
+          expiration_date: expirationDate,
           item_id: parseInt(foodItem),
           name: selectedFood.name,
         }),
@@ -97,19 +105,20 @@ export default function GroceryForm({
           // Reset form
           setFoodItem("");
           setQuantity("");
+          setExpirationDate("");
           setShowModal(false);
         })
         .catch((err) => {
-          console.log("Failed to update grocery item:", err);
+          console.log("Failed to update food item:", err);
         });
     } catch (err) {
-      console.log("Failed to update grocery item:", err.message);
+      console.log("Failed to update food item:", err.message);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (foodItem === "" || quantity === "") {
+    if (foodItem === "" || quantity === "" || expirationDate === "") {
       alert("Please fill out all fields.");
       return;
     }
@@ -131,24 +140,27 @@ export default function GroceryForm({
   return (
     <form onSubmit={handleSubmit}>
       <div>
-        {type === "add" && <h1>Add to Grocery List</h1>}
-        {type === "update" && <h1>Update Grocery Item</h1>}
+        {type === "add" && <h1>Add to Inventory</h1>}
+        {type === "update" && <h1>Update Food Item</h1>}
 
         <div>
           <label>Food item:</label>
-
-          <select
-            name="foodItem"
-            value={foodItem}
-            onChange={(e) => setFoodItem(e.target.value)}
-          >
-            <option value=""> Select a food item </option>
-            {foodItems.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
+          {foodItems.length === 0 ? (
+            <p>No food items available. Please add some food items first</p>
+          ) : (
+            <select
+              name="foodItem"
+              value={foodItem}
+              onChange={(e) => setFoodItem(e.target.value)}
+            >
+              <option value=""> Select a food item </option>
+              {foodItems.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
         <div>
           <label>Quantity:</label>
@@ -159,10 +171,18 @@ export default function GroceryForm({
             placeholder="e.g. 1, 2, 5"
           />
         </div>
-
+        <div>
+          <label>Expiration date:</label>
+          <input
+            name="expirationDate"
+            type="date"
+            value={expirationDate}
+            onChange={(e) => setExpirationDate(e.target.value)}
+          />
+        </div>
         <div>
           <button type="submit">
-            {type === "add" ? "Add to grocery list" : "Update item"}
+            {type === "add" ? "Add to inventory" : "Update item"}
           </button>
         </div>
       </div>

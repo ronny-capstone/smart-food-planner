@@ -15,8 +15,6 @@ export default function FoodItemList() {
   const handleItemChosen = (chosenItem) => {
     setChosenItems((prevChosenItems) => [...prevChosenItems, chosenItem]);
     setShowModal(false);
-    setChosenItems((prevChosenItems) => [...prevChosenItems, chosenItem]);
-    setShowModal(false);
   };
 
   return (
