@@ -155,7 +155,7 @@ export default function LogForm({
             <option value=""> Select a food item </option>
             {foodItems.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.name}
+                { item.name }
               </option>
             ))}
           </select>
