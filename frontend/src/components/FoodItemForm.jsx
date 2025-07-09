@@ -6,7 +6,7 @@ export default function FoodItemForm({ handleItemAdded }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (foodItem.trim() === "") {
+    if (foodItem === "") {
       alert("Please fill out all fields.");
       return;
     }

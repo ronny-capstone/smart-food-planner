@@ -8,6 +8,7 @@ export default function LogForm({
   setShowModal,
   type,
   logToUpdate,
+  currentUser
 }) {
   const [dateLogged, setDateLogged] = useState(
     new Date().toISOString().split("T")[0]
@@ -16,6 +17,18 @@ export default function LogForm({
   const [foodItem, setFoodItem] = useState("");
   const [foodItems, setFoodItems] = useState([]);
   const [servings, setServings] = useState("");
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}${FOOD_PATH}`)
+      .then((response) => response.json())
+      .then((data) => {
+        setFoodItems(data);
+      })
+      .catch((err) => {
+        console.log("Failed to fetch food items:", err);
+        setFoodItems([]);
+      });
+  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}${FOOD_PATH}`)
@@ -42,7 +55,7 @@ export default function LogForm({
       await fetch(`${API_BASE_URL}/log`, {
         method: "POST",
         body: JSON.stringify({
-          user_id: 1,
+          user_id: currentUser,
           date_logged: dateLogged,
           item_id: parseInt(foodItem),
           servings: parseInt(servings),
@@ -72,7 +85,7 @@ export default function LogForm({
       await fetch(`${API_BASE_URL}/log/${logToUpdate.id}`, {
         method: "PATCH",
         body: JSON.stringify({
-          user_id: 1,
+          user_id: currentUser,
           date_logged: dateLogged,
           item_id: parseInt(foodItem),
           servings: parseInt(servings),
@@ -143,7 +156,7 @@ export default function LogForm({
             <option value=""> Select a food item </option>
             {foodItems.map((item) => (
               <option key={item.id} value={item.id}>
-                { item.name }
+                {item.name}
               </option>
             ))}
           </select>

@@ -35,6 +35,8 @@ export default function LogModal({
             fats: getNutrient(data.nutrition.nutrients, "Fat"),
             sugars: getNutrient(data.nutrition.nutrients, "Sugar"),
           };
+
+          // Try to add to database with duplicate handling
           fetch(`${API_BASE_URL}/food`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
