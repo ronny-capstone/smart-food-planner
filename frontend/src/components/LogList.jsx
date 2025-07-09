@@ -2,24 +2,34 @@ import LogModal from "./LogModal";
 import LogForm from "./LogForm";
 import { API_BASE_URL } from "../utils/api";
 import { useEffect, useState } from "react";
-import { LOG_PATH, FOOD_PATH } from "../utils/paths";
+import { LOG_PATH, FOOD_PATH, AUTH_PATH } from "../utils/paths";
 
 export default function LogList() {
   const [logs, setLogs] = useState([]);
   const [activeModal, setActiveModal] = useState(null);
   const [logToUpdate, setLogToUpdate] = useState(null);
   const [foodItems, setFoodItems] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}${LOG_PATH}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setLogs(data);
-      })
-      .catch((err) => {
-        console.log(err.message);
-      });
+    fetchCurrentUser();
+  }, []);
 
+  useEffect(() => {
+    // Wait until we have currentUser to fetch logs
+    if (currentUser) {
+      fetch(`${API_BASE_URL}${LOG_PATH}/${currentUser}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setLogs(data);
+        })
+        .catch((err) => {
+          console.log(err.message);
+        });
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
     fetch(`${API_BASE_URL}${FOOD_PATH}`)
       .then((response) => response.json())
       .then((data) => {
@@ -28,7 +38,29 @@ export default function LogList() {
       .catch((err) => {
         console.log(err.message);
       });
-  }, [setLogs]);
+  }, []);
+
+  const fetchCurrentUser = () => {
+    fetch(`${API_BASE_URL}${AUTH_PATH}/me`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+      })
+      .then((data) => {
+        if (data && data.user_id) {
+          setCurrentUser(data.user_id);
+        } else {
+          console.log("No user_id in response");
+        }
+      })
+      .catch((err) => {
+        console.log("Failed to get current user:", err);
+      });
+  };
 
   const getFoodNameById = (itemId) => {
     const foodItem = foodItems.find((item) => item.id === itemId);
@@ -110,6 +142,7 @@ export default function LogList() {
             setShowModal={closeModal}
             type="add"
             logToUpdate={null}
+            currentUser={currentUser}
           />{" "}
         </LogModal>
       )}
@@ -139,6 +172,7 @@ export default function LogList() {
                       setShowModal={closeModal}
                       type="update"
                       logToUpdate={log}
+                      currentUser={currentUser}
                     />{" "}
                   </LogModal>
                 )}

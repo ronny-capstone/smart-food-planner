@@ -64,7 +64,6 @@ db.serialize(() => {
           name TEXT NOT NULL,
           quantity INTEGER NOT NULL,
           added_date TEXT NOT NULL,
-          expiration_date TEXT NOT NULL,
           FOREIGN KEY (user_id) REFERENCES users (id),
           FOREIGN KEY (item_id) REFERENCES food_items (id)
 
@@ -80,7 +79,18 @@ db.serialize(() => {
         FOREIGN KEY (user_id) REFERENCES users (id),
         FOREIGN KEY (item_id) REFERENCES food_items(id)
     )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS inventory (
+          id INTEGER PRIMARY KEY,
+          item_id INTEGER NOT NULL,
+          user_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          quantity INTEGER NOT NULL,
+          expiration_date TEXT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES users (id),
+          FOREIGN KEY (item_id) REFERENCES food_items (id)
+
+      )`);
 });
 
 module.exports = db;
-

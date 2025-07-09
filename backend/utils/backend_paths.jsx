@@ -6,6 +6,8 @@ const LOG_PATH = "/log";
 const LOGIN_PATH = "/login";
 const ME_PATH = "/me";
 const LOGOUT_PATH = "/logout";
+const AUTH_PATH = "/auth";
+
 module.exports = {
   SIGNUP_PATH,
   SEARCH_PATH,
@@ -15,4 +17,5 @@ module.exports = {
   LOGIN_PATH,
   ME_PATH,
   LOGOUT_PATH,
+  AUTH_PATH
 };
