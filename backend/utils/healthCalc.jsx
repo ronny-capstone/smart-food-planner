@@ -32,18 +32,18 @@ const calculateTDEE = (
   height_feet,
   height_inches
 ) => {
-  const bmr = 0;
+  let bmr = 0;
   if (gender === "woman") {
     bmr =
-      (10 * weight_kg) +
-      (6.25 * heightToCm(height_feet, height_inches)) -
-      (5 * age) -
+      10 * weight_kg +
+      6.25 * heightToCm(height_feet, height_inches) -
+      5 * age -
       161;
   } else {
     bmr =
-      (10 * weight_kg) +
-      (6.25 * heightToCm(height_feet, height_inches)) -
-      (5 * age) +
+      10 * weight_kg +
+      6.25 * heightToCm(height_feet, height_inches) -
+      5 * age +
       5;
   }
 
@@ -60,4 +60,44 @@ const calculateTDEE = (
   }
 };
 
-module.exports = { calculateBMR, calculateTDEE };
+const calculateMacroTargets = (tdee, health_goal) => {
+  let calorieGoal = 0;
+  let proteinGoal = 0;
+  let carbGoal = 0;
+  let fatGoal = 0;
+  if (health_goal === "Lose weight") {
+    // 10% deficit
+    calorieGoal = tdee - tdee * 0.1;
+    // 40% carbs, in grams
+    carbGoal = (calorieGoal * 0.4) / 4;
+    // 40% protein, in grams
+    proteinGoal = (calorieGoal * 0.4) / 4;
+    // 20% fats, in grams
+    fatGoal = (calorieGoal * 0.2) / 9;
+  } else if (health_goal === "Gain weight") {
+    // 500 calorie surplus
+    calorieGoal = tdee + 500;
+    // 40% carbs, in grams
+    carbGoal = (calorieGoal * 0.4) / 4;
+    // 30% protein, in grams
+    proteinGoal = (calorieGoal * 0.3) / 4;
+    // 30% fats, in grams
+    fatGoal = (calorieGoal * 0.3) / 9;
+  } else if (health_goal === "Maintain weight") {
+    calorieGoal = tdee;
+    // 40% carbs, in grams
+    carbGoal = (calorieGoal * 0.4) / 4;
+    // 30% protein, in grams
+    proteinGoal = (calorieGoal * 0.3) / 4;
+    // 30% fats, in grams
+    fatGoal = (calorieGoal * 0.3) / 9;
+  }
+  return {
+    calorie_goal: Math.round(calorieGoal),
+    protein_goal: Math.round(proteinGoal),
+    carb_goal: Math.round(carbGoal),
+    fat_goal: Math.round(fatGoal),
+  };
+};
+
+module.exports = { calculateBMR, calculateTDEE, calculateMacroTargets };
