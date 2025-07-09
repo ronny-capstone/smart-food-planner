@@ -2,7 +2,7 @@ require("dotenv").config({ path: "./.env" });
 const sqlite3 = require("sqlite3");
 const path = require("path");
 const express = require("express");
-const groceryRoutes = express.Router();
+const inventoryRoutes = express.Router();
 const StatusCodes = require("http-status-codes").StatusCodes;
 const dbPath = path.resolve(__dirname, "../db/fridge.db");
 const db = new sqlite3.Database(dbPath);
@@ -11,34 +11,30 @@ const checkInvalidVariable = (variable) => {
   return variable === undefined || variable === null || variable === "";
 };
 
-// Get all grocery items for a user
-groceryRoutes.get("/", async (req, res) => {
+// Get all inventory items for a user
+inventoryRoutes.get("/", async (req, res) => {
   const userId = req.query.user_id;
-  db.all(
-    `SELECT * FROM grocery_items WHERE user_id = ?`,
-    [userId],
-    (err, rows) => {
-      if (err) {
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-          error: "Error fetching grocery items",
-          details: err.message,
-        });
-      }
-      return res.status(StatusCodes.OK).json(rows);
+  db.all(`SELECT * FROM inventory WHERE user_id = ?`, [userId], (err, rows) => {
+    if (err) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: "Error fetching inventory items",
+        details: err.message,
+      });
     }
-  );
+    return res.status(StatusCodes.OK).json(rows);
+  });
 });
 
-// Add grocery item
-groceryRoutes.post("/", async (req, res) => {
-  const { user_id, item_id, name, quantity } = req.body;
-  const added_date = new Date().toISOString().split("T")[0];
+// Add food item to inventory
+inventoryRoutes.post("/", async (req, res) => {
+  const { user_id, item_id, name, quantity, expiration_date } = req.body;
 
   if (
     checkInvalidVariable(user_id) ||
     checkInvalidVariable(item_id) ||
     checkInvalidVariable(name) ||
-    checkInvalidVariable(quantity)
+    checkInvalidVariable(quantity) ||
+    checkInvalidVariable(expiration_date)
   ) {
     return res
       .status(StatusCodes.BAD_REQUEST)
@@ -46,12 +42,12 @@ groceryRoutes.post("/", async (req, res) => {
   }
   try {
     db.run(
-      `INSERT INTO grocery_items (user_id, item_id, name, quantity, added_date) VALUES (?, ?, ?, ?, ?)`,
-      [user_id, item_id, name, quantity, added_date],
+      `INSERT INTO inventory (user_id, item_id, name, quantity, expiration_date) VALUES (?, ?, ?, ?, ?)`,
+      [user_id, item_id, name, quantity, expiration_date],
       function (err) {
         if (err) {
           return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            error: "Error inserting grocery item",
+            error: "Error inserting food item",
             error: err.message,
           });
         }
@@ -61,32 +57,40 @@ groceryRoutes.post("/", async (req, res) => {
           item_id: item_id,
           name: name,
           quantity: quantity,
-          added_date: added_date,
+          expiration_date: expiration_date,
         };
         return res
           .status(StatusCodes.CREATED)
-          .json({ message: "Created grocery item", item: insertedItem });
+          .json({
+            message: "Created food item for inventory",
+            item: insertedItem,
+          });
       }
     );
   } catch (err) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "An error occurred while creating a grocery item",
+      message: "An error occurred while creating a food item",
       error: err.message,
     });
   }
 });
 
-// Update grocery items
-groceryRoutes.patch("/:id", async (req, res) => {
+// Update inventory items
+inventoryRoutes.patch("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { quantity, item_id, name } = req.body;
+    const { quantity, expiration_date, item_id, name } = req.body;
     const updates = [];
     const values = [];
 
     if (quantity !== undefined) {
       updates.push("quantity = ?");
       values.push(quantity);
+    }
+
+    if (expiration_date !== undefined) {
+      updates.push("expiration_date = ?");
+      values.push(expiration_date);
     }
 
     if (item_id !== undefined) {
@@ -106,17 +110,17 @@ groceryRoutes.patch("/:id", async (req, res) => {
     }
     values.push(id);
     db.run(
-      `UPDATE grocery_items SET ${updates.join(", ")} WHERE id = ?`,
+      `UPDATE inventory SET ${updates.join(", ")} WHERE id = ?`,
       values,
       function (err) {
         if (err) {
           return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            message: "Error updating grocery item",
+            message: "Error updating food item",
             error: err.message,
           });
         }
         // Get updated grocery item
-        db.get(`SELECT * FROM grocery_items WHERE id = ?`, [id], (err, row) => {
+        db.get(`SELECT * FROM inventory WHERE id = ?`, [id], (err, row) => {
           if (err) {
             return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
               message: "Error fetching updated record",
@@ -125,23 +129,23 @@ groceryRoutes.patch("/:id", async (req, res) => {
           }
           return res
             .status(StatusCodes.OK)
-            .json({ message: "Updated grocery item", item: row });
+            .json({ message: "Updated food item", item: row });
         });
       }
     );
   } catch (err) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "An error occurred while updating grocery item",
+      message: "An error occurred while updating food item",
       error: err.message,
     });
   }
 });
 
-// Delete grocery item
-groceryRoutes.delete("/:id", async (req, res) => {
+// Delete food item from inventory
+inventoryRoutes.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    db.get("SELECT id FROM grocery_items WHERE id = ?", [id], (err, row) => {
+    db.get("SELECT id FROM inventory WHERE id = ?", [id], (err, row) => {
       if (err) {
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
@@ -151,18 +155,18 @@ groceryRoutes.delete("/:id", async (req, res) => {
       if (!row) {
         return res
           .status(StatusCodes.NOT_FOUND)
-          .json({ error: "Grocery item not found" });
+          .json({ error: "Food item not found in inventory" });
       }
 
-      db.run("DELETE FROM grocery_items WHERE id = ?", [id], function (err) {
+      db.run("DELETE FROM inventory WHERE id = ?", [id], function (err) {
         if (err) {
           return res
             .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .json({ error: "Error deleting grocery item" });
+            .json({ error: "Error deleting food item" });
         }
 
         return res.status(StatusCodes.OK).json({
-          message: "Grocery item deleted successfully",
+          message: "Food item deleted successfully",
           deletedItem: row,
         });
       });
@@ -170,8 +174,8 @@ groceryRoutes.delete("/:id", async (req, res) => {
   } catch (err) {
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: "An error occurred while deleting a grocery item" });
+      .json({ error: "An error occurred while deleting a food item" });
   }
 });
 
-module.exports = groceryRoutes;
+module.exports = inventoryRoutes;

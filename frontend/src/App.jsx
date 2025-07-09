@@ -4,6 +4,7 @@ import LogList from "./components/LogList";
 import FoodItemList from "./components/FoodItemList";
 import GroceryList from "./components/GroceryList";
 import UserAuth from "./components/UserAuth";
+import Inventory from "./components/Inventory"
 import { API_BASE_URL } from "./utils/api";
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
             <LogList />
             <FoodItemList />
             <GroceryList />
+            <Inventory/>
           </>
         )}
       </div>

@@ -1,12 +1,14 @@
-import GroceryForm from "./GroceryForm";
-import GroceryCard from "./GroceryCard";
+import InventoryForm from "./InventoryForm";
+import InventoryCard from "./InventoryCard";
 import LogModal from "./LogModal";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useState } from "react";
+import { getDaysUntilExpiration } from "../utils/dateUtils";
 import { API_BASE_URL } from "../utils/api";
-import { AUTH_PATH, GROCERY_PATH } from "../utils/paths";
+import { AUTH_PATH, INVENTORY_PATH } from "../utils/paths";
 
-export default function GroceryList() {
-  const [groceries, setGroceries] = useState([]);
+export default function Inventory() {
+  const [inventory, setInventory] = useState([]);
   const [activeModal, setActiveModal] = useState(false);
   const [groceryToUpdate, setGroceryToUpdate] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -29,7 +31,7 @@ export default function GroceryList() {
       .then((data) => {
         if (data.authenticated && data.user_id) {
           setCurrentUser(data.user_id);
-          fetchGroceries(data.user_id);
+          fetchInventory(data.user_id);
         } else {
           console.log("User not logged in:", data.message);
         }
@@ -39,33 +41,33 @@ export default function GroceryList() {
       });
   };
 
-  const fetchGroceries = (userId) => {
-    fetch(`${API_BASE_URL}${GROCERY_PATH}?user_id=${userId}`)
+  const fetchInventory = (userId) => {
+    fetch(`${API_BASE_URL}${INVENTORY_PATH}?user_id=${userId}`)
       .then((response) => {
         return response.json();
       })
       .then((data) => {
         if (Array.isArray(data)) {
-          setGroceries(data);
+          setInventory(data);
         } else {
           console.log("Expected array but got ", typeof data);
-          setGroceries([]);
+          setInventory([]);
         }
       })
       .catch((err) => {
         alert("Failed to fetch grocery items: ", err);
-        setGroceries([]);
+        setInventory([]);
       });
   };
 
   const handleGroceryAdded = (createdGrocery) => {
-    setGroceries((prevGroceries) => [createdGrocery.item, ...prevGroceries]);
+    setInventory((prevGroceries) => [createdGrocery.item, ...prevGroceries]);
 
     setActiveModal(null);
   };
 
   const handleGroceryUpdated = (updatedGrocery) => {
-    setGroceries((prevGroceries) =>
+    setInventory((prevGroceries) =>
       prevGroceries.map((grocery) => {
         if (grocery.id === updatedGrocery.item.id) {
           return {
@@ -73,26 +75,27 @@ export default function GroceryList() {
             item_id: updatedGrocery.item.id,
             food_name: updatedGrocery.item.name,
             quantity: updatedGrocery.item.quantity,
+            expirationDate: updatedGrocery.item.expiration_date,
           };
         }
         return grocery;
       })
     );
     // Refetch
-    fetchGroceries(currentUser);
+    fetchInventory(currentUser);
     setActiveModal(null);
     setGroceryToUpdate(null);
   };
 
   const handleDelete = (groceryToDelete) => {
     try {
-      fetch(`${API_BASE_URL}${GROCERY_PATH}/${groceryToDelete.id}`, {
+      fetch(`${API_BASE_URL}${INVENTORY_PATH}/${groceryToDelete.id}`, {
         method: "DELETE",
       })
         .then((response) => {
           if (response.status === 200) {
-            setGroceries(
-              groceries.filter((grocery) => grocery.id !== groceryToDelete.id)
+            setInventory(
+              inventory.filter((grocery) => grocery.id !== groceryToDelete.id)
             );
           } else {
             alert(`Error deleting item: ${response.json().error}`);
@@ -122,15 +125,20 @@ export default function GroceryList() {
     setGroceryToUpdate(null);
   };
 
+  // Sort inventory by expiration date
+  const sortedItems = inventory.sort(
+    (a, b) => new Date(a.expiration_date) - new Date(b.expiration_date)
+  );
+
   return (
     <div>
-      <h1> Grocery List </h1>
-      <button onClick={openAddModal}>Add Grocery Item</button>
+      <h1> Inventory </h1>
+      <button onClick={openAddModal}>Add Food Item</button>
 
       {/* Add Modal */}
       {activeModal === "add" && (
         <LogModal onClose={closeModal}>
-          <GroceryForm
+          <InventoryForm
             handleGroceryAdded={handleGroceryAdded}
             handleGroceryUpdated={handleGroceryUpdated}
             setShowModal={closeModal}
@@ -142,15 +150,15 @@ export default function GroceryList() {
       )}
 
       {/* Main grocery list section */}
-      <div className="groceryList">
-        <h2>Your Grocery Items ({groceries.length})</h2>
-        {groceries.length == 0 && <p>Your grocery list is empty!</p>}
+      <div className="inventoryList">
+        <h2>Your Food Items ({inventory.length})</h2>
+        {inventory.length == 0 && <p>Your inventory is empty!</p>}
 
-        {groceries.map((grocery) => {
+        {sortedItems.map((item) => {
           return (
-            <GroceryCard
-              key={grocery.id}
-              grocery={grocery}
+            <InventoryCard
+              key={item.id}
+              item={item}
               handleEdit={openUpdateModal}
               handleDelete={handleDelete}
             />
@@ -160,7 +168,7 @@ export default function GroceryList() {
         {/* Update Modal */}
         {groceryToUpdate && activeModal === "update" && (
           <LogModal onClose={closeModal}>
-            <GroceryForm
+            <InventoryForm
               handleGroceryAdded={handleGroceryAdded}
               handleGroceryUpdated={handleGroceryUpdated}
               setShowModal={closeModal}
@@ -169,6 +177,43 @@ export default function GroceryList() {
               currentUser={currentUser}
             />
           </LogModal>
+        )}
+
+        {/* Statistics, only shows if there are groceries in inventory */}
+        {inventory.length > 0 && (
+          <div>
+            <h3>Quick Overview:</h3>
+            <p>Total items: {inventory.length}</p>
+            <p>
+              {/* Count items expiring soon (<=3 days remaining) */}
+              Expiring soon:
+              {
+                inventory.filter(
+                  (g) =>
+                    getDaysUntilExpiration(g.expiration_date) <= 3 &&
+                    getDaysUntilExpiration(g.expiration_date) >= 0
+                ).length
+              }
+            </p>
+            <p>
+              {/* Count expired items (<0 days remaining) */}
+              Expired:
+              {
+                inventory.filter(
+                  (g) => getDaysUntilExpiration(g.expiration_date) < 0
+                ).length
+              }
+            </p>
+            {/* Count fresh items (>7 days remaining) */}
+            <p>
+              Fresh items:
+              {
+                inventory.filter(
+                  (g) => getDaysUntilExpiration(g.expiration_date) > 7
+                ).length
+              }
+            </p>
+          </div>
         )}
       </div>
     </div>

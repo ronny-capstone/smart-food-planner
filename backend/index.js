@@ -7,6 +7,7 @@ const logRoutes = require("./routes/logRoutes");
 const cors = require("cors");
 const foodRoutes = require("./routes/foodItemRoutes");
 const groceryRoutes = require("./routes/groceryItemRoutes");
+const inventoryRoutes = require("./routes/inventoryRoutes");
 
 const app = express();
 const PORT = 3000;
@@ -34,6 +35,7 @@ app.use("/auth", authRoutes);
 app.use("/log", logRoutes);
 app.use("/food", foodRoutes);
 app.use("/grocery", groceryRoutes);
+app.use("/inventory", inventoryRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
