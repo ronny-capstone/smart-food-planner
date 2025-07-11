@@ -2,12 +2,12 @@ const sqlite3 = require("sqlite3");
 const express = require("express");
 const path = require("path");
 const { STATUS_CODES } = require("http");
-const checkInvalidVariable = require("../utils/invalidVars.jsx");
+const checkInvalidVariable = require("../utils/invalidVars.js");
 const {
   calculateBMR,
   calculateTDEE,
   calculateMacroTargets,
-} = require("../utils/healthCalc.jsx");
+} = require("../utils/healthCalc.js");
 const StatusCodes = require("http-status-codes").StatusCodes;
 
 const profileRoutes = express.Router();

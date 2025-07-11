@@ -12,7 +12,7 @@ const {
   SEARCH_PATH,
   NUTRITION_PATH,
 } = require("../../frontend/src/utils/paths.jsx");
-const checkInvalidVariable = require("../utils/invalidVars.jsx");
+const checkInvalidVariable = require("../utils/invalidVars.js");
 const db = new sqlite3.Database(dbPath);
 
 // Get nutritional information for food item
