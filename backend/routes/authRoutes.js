@@ -3,7 +3,7 @@ const {
   LOGIN_PATH,
   ME_PATH,
   LOGOUT_PATH,
-} = require("../utils/backend_paths.jsx");
+} = require("../utils/backend_paths.js");
 const sqlite3 = require("sqlite3");
 const express = require("express");
 const bcrypt = require("bcrypt");
