@@ -47,24 +47,26 @@ function App() {
           console.log("User not logged in:", data.message);
           setCurrentUser(null);
           setIsAuthenticated(false);
+          setInventory([]);
         }
       })
       .catch((err) => {
         console.log("Failed to get current user:", err);
         setCurrentUser(null);
         setIsAuthenticated(false);
+        setInventory([]);
       });
   };
 
   // Load inventory
   useEffect(() => {
-    if (currentUser) {
+    if (isAuthenticated && currentUser) {
       fetchInventory(currentUser);
     }
-  }, [currentUser]);
+  }, [currentUser, isAuthenticated]);
 
   const fetchInventory = (userId) => {
-    fetch(`${API_BASE_URL}${INVENTORY_PATH}?use_id=${userId}`)
+    fetch(`${API_BASE_URL}${INVENTORY_PATH}?user_id=${userId}`)
       .then((response) => {
         return response.json();
       })

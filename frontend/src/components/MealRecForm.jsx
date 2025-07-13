@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
-import { PROFILE_PATH, RECIPES_PATH, INVENTORY_PATH } from "../utils/paths";
+import { PROFILE_PATH, RECIPES_PATH } from "../utils/paths";
+import { cuisinesList, intolerancesList, typeList } from "../utils/mealFilters";
 
 export default function MealRecForm({ currentUser, inventory }) {
   const [cuisine, setCuisine] = useState("");
   const [diet, setDiet] = useState("");
   const [intolerances, setIntolerances] = useState("");
   const [type, setType] = useState("");
-  const [ingredientsIncluded, setIngredientsIncluded] = useState("");
   const [minCarbs, setMinCarbs] = useState(0);
   const [maxCarbs, setMaxCarbs] = useState(0);
   const [minProtein, setMinProtein] = useState(0);
@@ -38,70 +38,6 @@ export default function MealRecForm({ currentUser, inventory }) {
     minFat,
     maxFat,
   };
-
-  const cuisinesList = [
-    "African",
-    "Asian",
-    "American",
-    "Cajun",
-    "Caribbean",
-    "Chinese",
-    "Eastern European",
-    "European",
-    "French",
-    "German",
-    "Greek",
-    "Indian",
-    "Irish",
-    "Italian",
-    "Japanese",
-    "Jewish",
-    "Korean",
-    "Latin American",
-    "Mediterranean",
-    "Mexican",
-    "Middle Eastern",
-    "Nordic",
-    "Southern",
-    "Spanish",
-    "Thai",
-    "Vietnamese",
-  ];
-  const dietsList = [
-    "Gluten Free",
-    "Ketogenic",
-    "Vegetarian",
-    "Vegan",
-    "Pescetarian",
-    "Paleo",
-  ];
-
-  const intolerancesList = [
-    "Dairy",
-    "Egg",
-    "Gluten",
-    "Grain",
-    "Peanut",
-    "Seafood",
-    "Sesame",
-    "Shellfish",
-    "Soy",
-    "Sulfite",
-    "Tree Nut",
-    "Wheat",
-  ];
-
-  const typeList = [
-    "main course",
-    "side dish",
-    "dessert",
-    "appetizer",
-    "salad",
-    "bread",
-    "breakfast",
-    "soup",
-    "snack",
-  ];
 
   // Fetch user's diet from profile
   useEffect(() => {
@@ -188,7 +124,6 @@ export default function MealRecForm({ currentUser, inventory }) {
     setCuisine("");
     setIntolerances("");
     setType("");
-    setIngredientsIncluded("");
     setRecipes("");
     setMinCarbs(0);
     setMaxCarbs(0);
@@ -294,6 +229,111 @@ export default function MealRecForm({ currentUser, inventory }) {
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <p>Nutrition Filters</p>
+          <p>Calories</p>
+          <div>
+            <div>
+              <label>Min:</label>
+              <input
+                type="number"
+                min="0"
+                name="minCalories"
+                value={minCalories || ""}
+                onChange={(e) => setMinCalories(e.target.value)}
+              />
+            </div>
+            <div>
+              <label>Max:</label>
+              <input
+                type="number"
+                min="0"
+                name="maxCalories"
+                value={maxCalories || ""}
+                onChange={(e) => setMaxCalories(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p>Protein</p>
+          <div>
+            <div>
+              <label>Min:</label>
+              <input
+                type="number"
+                min="0"
+                name="minProtein"
+                value={minProtein || ""}
+                onChange={(e) => setMinProtein(e.target.value)}
+              />
+            </div>
+            <div>
+              <label>Max:</label>
+              <input
+                type="number"
+                min="0"
+                name="maxProtein"
+                value={maxProtein || ""}
+                onChange={(e) => setMaxProtein(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p>Carbohydrates</p>
+          <div>
+            <div>
+              <label>Min:</label>
+              <input
+                type="number"
+                min="0"
+                name="minCarbs"
+                value={minCarbs || ""}
+                onChange={(e) => setMinCarbs(e.target.value)}
+              />
+            </div>
+            <div>
+              <label>Max:</label>
+              <input
+                type="number"
+                min="0"
+                name="maxCarbs"
+                value={maxCarbs || ""}
+                onChange={(e) => setMaxCarbs(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p>Fats</p>
+          <div>
+            <div>
+              <label>Min:</label>
+              <input
+                type="number"
+                min="0"
+                name="minFat"
+                value={minFat || ""}
+                onChange={(e) => setMinFat(e.target.value)}
+              />
+            </div>
+            <div>
+              <label>Max:</label>
+              <input
+                type="number"
+                min="0"
+                name="maxFat"
+                value={maxFat || ""}
+                onChange={(e) => setMaxFat(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="mb-1 w-full max-w-sm">
