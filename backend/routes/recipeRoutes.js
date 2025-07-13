@@ -5,7 +5,6 @@ const StatusCodes = require("http-status-codes").StatusCodes;
 const axios = require("axios");
 const apiKey = process.env.SPOONACULAR_API_KEY;
 const baseUrl = process.env.SPOONACULAR_RECIPE_URL;
-const getRecommendations = require("../utils/recipeRecommendation.js");
 const checkInvalidVariable = require("../utils/invalidVars.js");
 
 // Filter recipes
@@ -16,7 +15,6 @@ recipeRoutes.get("/", async (req, res) => {
     query: preferences.query || "",
     cuisine: preferences.cuisine || "",
     diet: preferences.diet || "",
-    intolerances: preferences.intolerances || "",
     type: preferences.type || "",
     includeIngredients: preferences.includeIngredients || "",
     addRecipeInformation: preferences.addRecipeInformation || "",
