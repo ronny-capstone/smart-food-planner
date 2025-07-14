@@ -91,21 +91,13 @@ const calculateTDEE = (
   height_feet,
   height_inches
 ) => {
-  let bmr = 0;
-  if (gender === GENDERS.WOMAN) {
-    bmr =
-      TDEE_CONSTANTS.WEIGHT_FACTOR * weight_kg +
-      TDEE_CONSTANTS.HEIGHT_FACTOR * heightToCm(height_feet, height_inches) -
-      TDEE_CONSTANTS.HEIGHT_FACTOR * age -
-      TDEE_CONSTANTS.W_BASE;
-  } else {
-    bmr =
-      TDEE_CONSTANTS.WEIGHT_FACTOR * weight_kg +
-      TDEE_CONSTANTS.HEIGHT_FACTOR * heightToCm(height_feet, height_inches) -
-      TDEE_CONSTANTS.HEIGHT_FACTOR * age +
-      TDEE_CONSTANTS.M_BASE;
-  }
+  let bmr =
+    TDEE_CONSTANTS.WEIGHT_FACTOR * weight_kg +
+    TDEE_CONSTANTS.HEIGHT_FACTOR * heightToCm(height_feet, height_inches) -
+    TDEE_CONSTANTS.AGE_FACTOR * age;
 
+  bmr += gender === GENDERS.WOMAN ? -TDEE_CONSTANTS.W_BASE : TDEE_CONSTANTS.M_BASE;
+  
   if (activity === ACTIVITY_LEVELS.SEDENTARY) {
     return bmr * TDEE_CONSTANTS.SEDENTARY;
   } else if (activity === ACTIVITY_LEVELS.LIGHTLY_ACTIVE) {
