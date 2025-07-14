@@ -27,21 +27,6 @@ export const cuisinesList = [
   "Vietnamese",
 ];
 
-export const intolerancesList = [
-  "Dairy",
-  "Egg",
-  "Gluten",
-  "Grain",
-  "Peanut",
-  "Seafood",
-  "Sesame",
-  "Shellfish",
-  "Soy",
-  "Sulfite",
-  "Tree Nut",
-  "Wheat",
-];
-
 export const typeList = [
   "main course",
   "side dish",
