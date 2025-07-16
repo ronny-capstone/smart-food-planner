@@ -7,33 +7,17 @@ import { getDaysUntilExpiration } from "../utils/dateUtils";
 import { API_BASE_URL } from "../utils/api";
 import { AUTH_PATH, INVENTORY_PATH } from "../utils/paths";
 
-export default function Inventory({ currentUser }) {
-  const [inventory, setInventory] = useState([]);
+export default function Inventory({
+  currentUser,
+  inventory,
+  setInventory,
+  handleInventoryUpdate,
+}) {
   const [activeModal, setActiveModal] = useState(false);
   const [groceryToUpdate, setGroceryToUpdate] = useState(null);
 
-  const fetchInventory = (userId) => {
-    fetch(`${API_BASE_URL}${INVENTORY_PATH}?user_id=${userId}`)
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setInventory(data);
-        } else {
-          console.log("Expected array but got ", typeof data);
-          setInventory([]);
-        }
-      })
-      .catch((err) => {
-        alert("Failed to fetch grocery items: ", err);
-        setInventory([]);
-      });
-  };
-
   const handleGroceryAdded = (createdGrocery) => {
     setInventory((prevGroceries) => [createdGrocery.item, ...prevGroceries]);
-
     setActiveModal(null);
   };
 
@@ -52,8 +36,6 @@ export default function Inventory({ currentUser }) {
         return grocery;
       })
     );
-    // Refetch
-    fetchInventory(currentUser);
     setActiveModal(null);
     setGroceryToUpdate(null);
   };

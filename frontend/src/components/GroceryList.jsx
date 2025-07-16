@@ -10,6 +10,13 @@ export default function GroceryList({ currentUser }) {
   const [activeModal, setActiveModal] = useState(false);
   const [groceryToUpdate, setGroceryToUpdate] = useState(null);
 
+  useEffect(() => {
+    // Wait until we have currentUser to fetch groceries
+    if (currentUser) {
+      fetchGroceries(currentUser);
+    }
+  }, [currentUser]);
+
   const fetchGroceries = (userId) => {
     fetch(`${API_BASE_URL}${GROCERY_PATH}?user_id=${userId}`)
       .then((response) => {

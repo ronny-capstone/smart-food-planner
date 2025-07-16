@@ -7,8 +7,9 @@ import UserAuth from "./components/UserAuth";
 import Inventory from "./components/Inventory";
 import ProfileForm from "./components/ProfileForm";
 import NutritionDisplay from "./components/NutritionDisplay";
+import MealRecForm from "./components/MealRecForm";
 import { API_BASE_URL } from "./utils/api";
-import { AUTH_PATH } from "./utils/paths";
+import { AUTH_PATH, INVENTORY_PATH } from "./utils/paths";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -16,6 +17,7 @@ function App() {
   const [showGoals, setShowGoals] = useState(false);
   // User id for logged in user
   const [currentUser, setCurrentUser] = useState(null);
+  const [inventory, setInventory] = useState([]);
 
   // When loads, fetch current user's authentication status
   useEffect(() => {
@@ -45,12 +47,40 @@ function App() {
           console.log("User not logged in:", data.message);
           setCurrentUser(null);
           setIsAuthenticated(false);
+          setInventory([]);
         }
       })
       .catch((err) => {
         console.log("Failed to get current user:", err);
         setCurrentUser(null);
         setIsAuthenticated(false);
+        setInventory([]);
+      });
+  };
+
+  // Load inventory
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      fetchInventory(currentUser);
+    }
+  }, [currentUser, isAuthenticated]);
+
+  const fetchInventory = (userId) => {
+    fetch(`${API_BASE_URL}${INVENTORY_PATH}?user_id=${userId}`)
+      .then((response) => {
+        return response.json();
+      })
+      .then((data) => {
+        if (data) {
+          setInventory(data);
+        } else {
+          console.log("Failed to fetch inventory");
+          setInventory([]);
+        }
+      })
+      .catch((err) => {
+        console.log("Failed to fetch inventory");
+        setInventory([]);
       });
   };
 
@@ -62,6 +92,7 @@ function App() {
       .then(() => {
         setIsAuthenticated(false);
         setShowProfileForm(false);
+        setInventory([]);
       })
       .catch((err) => {
         console.log("Error logging out");
@@ -114,7 +145,13 @@ function App() {
                 <LogList currentUser={currentUser} />
                 <FoodItemList />
                 <GroceryList currentUser={currentUser} />
-                <Inventory currentUser={currentUser} />
+                <Inventory
+                  currentUser={currentUser}
+                  inventory={inventory}
+                  setInventory={setInventory}
+                  handleInventoryUpdate={fetchInventory}
+                />
+                <MealRecForm currentUser={currentUser} inventory={inventory} />
               </div>
             )}
           </>

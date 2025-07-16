@@ -4,7 +4,7 @@ const path = require("path");
 const express = require("express");
 const groceryRoutes = express.Router();
 const StatusCodes = require("http-status-codes").StatusCodes;
-const checkInvalidVariable = require("../utils/invalidVars.jsx");
+const checkInvalidVariable = require("../utils/invalidVars.js");
 const dbPath = path.resolve(__dirname, "../db/fridge.db");
 const db = new sqlite3.Database(dbPath);
 
