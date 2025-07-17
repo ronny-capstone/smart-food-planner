@@ -152,6 +152,7 @@ function App() {
                   handleInventoryUpdate={fetchInventory}
                 />
                 <MealRecForm currentUser={currentUser} />
+                <GroceryRecForm currentUser={currentUser} inventory={inventory}/>
               </div>
             )}
           </>

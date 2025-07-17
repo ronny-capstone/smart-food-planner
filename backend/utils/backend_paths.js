@@ -9,6 +9,10 @@ const LOGOUT_PATH = "/logout";
 const AUTH_PATH = "/auth";
 const PROFILE_PATH = "/profile";
 const RECIPES_PATH = "/recipes";
+const INVENTORY_PATH = "/inventory";
+const REC_PATH = "/recommendations";
+const MAP_PATH = "/mapProducts";
+const PRODUCTS_PATH = "/products";
 
 module.exports = {
   SIGNUP_PATH,
@@ -22,4 +26,8 @@ module.exports = {
   AUTH_PATH,
   PROFILE_PATH,
   RECIPES_PATH,
+  INVENTORY_PATH,
+  REC_PATH,
+  MAP_PATH,
+  PRODUCTS_PATH,
 };
