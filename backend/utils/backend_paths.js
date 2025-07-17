@@ -13,6 +13,8 @@ const INVENTORY_PATH = "/inventory";
 const REC_PATH = "/recommendations";
 const MAP_PATH = "/mapProducts";
 const PRODUCTS_PATH = "/products";
+const GENERATE_PATH = "/generate";
+const GROCERY_LIST_PATH = "/groceryList";
 
 module.exports = {
   SIGNUP_PATH,
@@ -30,4 +32,6 @@ module.exports = {
   REC_PATH,
   MAP_PATH,
   PRODUCTS_PATH,
+  GENERATE_PATH,
+  GROCERY_LIST_PATH,
 };

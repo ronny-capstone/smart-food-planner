@@ -41,7 +41,7 @@ app.use("/grocery", groceryRoutes);
 app.use("/inventory", inventoryRoutes);
 app.use("/profile", profileRoutes);
 app.use("/recipes", recipeRoutes);
-app.use("groceryList", groceryListRoutes);
+app.use("/groceryList", groceryListRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
