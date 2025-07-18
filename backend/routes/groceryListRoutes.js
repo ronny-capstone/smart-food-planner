@@ -17,15 +17,19 @@ const {
 const {
   groceryRecommendation,
 } = require("../recommendation/groceryRecommendation.js");
+const {
+  GENERATE_CONSTANTS,
+  MEAL_CONSTANTS,
+} = require("../utils/groceryConstants");
 
 // Get user's full grocery list
 groceryListRoutes.get(`${GENERATE_PATH}/:userId`, async (req, res) => {
   const { userId } = req.params;
   const {
-    budget = 50,
-    totalMeals = 7,
-    allowRepeats = true,
-    maxRepeats = 2,
+    budget = GENERATE_CONSTANTS.BUDGET,
+    totalMeals = MEAL_CONSTANTS.TOTAL_MEALS,
+    allowRepeats = GENERATE_CONSTANTS.ALLOW_REPEATS,
+    maxRepeats = MEAL_CONSTANTS.MAX_REPEATS,
   } = req.query;
 
   try {
