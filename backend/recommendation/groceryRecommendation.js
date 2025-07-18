@@ -4,7 +4,7 @@ const { getDaysUntilExpiration } = require("../utils/dateUtils.js");
 const {
   RECIPES_PATH,
   REC_PATH,
-  MAP_PATH,
+  COST_PATH,
   GROCERY_LIST_PATH,
 } = require("../utils/backend_paths.js");
 const {
@@ -37,7 +37,7 @@ const groceryRecommendation = async (userId, preferences, inventory) => {
     }
 
     const { shoppingList, expiringItems, itemsToBuy, itemsExpiring } =
-      calculateShoppingAndExpiring(mealPlan, inventoryAnalysis);
+      calculateShoppingAndExpiring(mealPlan, inventoryAnalysis, userId);
 
     if (itemsToBuy === 0) {
       return {
@@ -51,15 +51,13 @@ const groceryRecommendation = async (userId, preferences, inventory) => {
         message: "All ingredients already available",
       };
     }
-    const shoppingListWithPrices = await mapIngredientsToProducts(
-      shoppingList,
-      budget,
-      userId
-    );
+
+    const { shoppingList: shoppingListCosts, totalCost } =
+      await calculateShoppingListCost(shoppingList, userId);
 
     return {
-      shoppingList: shoppingListWithPrices.shoppingList,
-      totalCost: shoppingListWithPrices.totalCost,
+      shoppingList: shoppingListCosts,
+      totalCost,
       budget: budget,
       expiringItems: expiringItems,
       expiringCount: itemsExpiring,
@@ -182,7 +180,7 @@ const generateMealPlanWithRepeats = async (userId, preferences) => {
   }
 };
 
-const calculateShoppingAndExpiring = (mealPlan, inventoryAnalysis) => {
+const calculateShoppingAndExpiring = (mealPlan, inventoryAnalysis, userId) => {
   // Items to buy
   const shoppingList = new Map();
   // Items to use up
@@ -193,29 +191,31 @@ const calculateShoppingAndExpiring = (mealPlan, inventoryAnalysis) => {
     const ingredients =
       recipe.extendedIngredients || recipe.missedIngredients || [];
     // Iterate through each ingredient in the recipe
-    ingredients.forEach((ingredient) => {
-      const ingredientName = ingredient.name.toLowerCase();
+    ingredients.forEach((ingredientData) => {
+      const ingredientId = ingredientData.id;
       // Check if this ingredient is well stocked
       const stockedIngredient = inventoryAnalysis.wellStocked.find(
-        (item) => item.name.toLowerCase() === ingredientName
+        (item) => item.name.toLowerCase() === ingredientData.name.toLowerCase()
       );
       // Check if we need to buy this ingredient
       if (!stockedIngredient) {
-        if (shoppingList.has(ingredientName)) {
+        if (shoppingList.has(ingredientId)) {
           // Combine ingredient quantities for multiple recipes
-          const alreadyExisting = shoppingList.get(ingredientName);
-          shoppingList.set(ingredientName, {
+          const alreadyExisting = shoppingList.get(ingredientId);
+          const newQuantity = alreadyExisting.quantity + ingredientData.amount;
+          shoppingList.set(ingredientId, {
             ...alreadyExisting,
-            quantity: alreadyExisting.quantity + ingredient.amount,
-            unit: ingredient.unit,
+            quantity: newQuantity,
+            unit: ingredientData.unit,
             // Combine recipes that use this ingredient
             recipes: [...alreadyExisting.recipes, recipe.title],
           });
         } else {
-          shoppingList.set(ingredientName, {
-            name: ingredient.name,
-            quantity: ingredient.amount,
-            unit: ingredient.unit,
+          shoppingList.set(ingredientId, {
+            id: ingredientId,
+            name: ingredientData.name,
+            quantity: ingredientData.amount,
+            unit: ingredientData.unit,
             recipes: [recipe.title],
             priority: "needed",
           });
@@ -232,6 +232,7 @@ const calculateShoppingAndExpiring = (mealPlan, inventoryAnalysis) => {
       expirationDate: item.expiration_date,
       daysLeft: getDaysUntilExpiration(item.expiration_date),
       priority: "expiring",
+      id: item.id,
     });
   });
 
@@ -243,39 +244,65 @@ const calculateShoppingAndExpiring = (mealPlan, inventoryAnalysis) => {
   };
 };
 
-const mapIngredientsToProducts = async (shoppingList, budget, userId) => {
-  const items = [];
+const calculateShoppingListCost = async (shoppingList, userId) => {
   let totalCost = 0;
+  const shoppingListCosts = [];
 
-  for (const ingredient of shoppingList) {
+  for (const item of shoppingList) {
     try {
-      const response = await axios.get(
-        `${baseUrl}${GROCERY_LIST_PATH}${MAP_PATH}/${userId}`,
-        {
-          params: {
-            ingredient: ingredient.name,
-          },
-        }
+      const costInfo = await getIngredientCost(
+        item.id,
+        item.quantity,
+        item.unit,
+        userId
       );
-      if (response.data.product) {
-        const product = response.data.product;
-        const itemCost = product.price * Math.ceil(ingredient.quantity);
-        items.push({
-          ...ingredient,
-          productName: product.name,
-          price: product.price,
-          totalCost: itemCost,
-          imageUrl: product.imgUrl,
-        });
-        totalCost += itemCost;
-      } else {
-        console.log(`No price found for ${ingredient.name}`);
-      }
+
+      totalCost += costInfo.cost;
+      shoppingListCosts.push({
+        ...item,
+        itemCost: Math.round(costInfo.cost * 100) / 100,
+        costInfo: costInfo,
+      });
     } catch (err) {
-      console.log(`Error pricing ${ingredient.name}`);
+      shoppingListCosts.push({
+        ...item,
+        itemCost: 0,
+        costInfo: null,
+      });
     }
   }
-  return { shoppingList: items, totalCost: totalCost, itemCount: items.length };
+
+  return { shoppingList: shoppingListCosts, totalCost: totalCost.toFixed(2) };
+};
+
+const getIngredientCost = async (
+  ingredientId,
+  quantity,
+  ingredientUnit,
+  userId
+) => {
+  try {
+    const response = await axios.get(
+      `${baseUrl}${GROCERY_LIST_PATH}${COST_PATH}/${userId}`,
+      {
+        params: {
+          ingredientId,
+          amount: quantity,
+          unit: ingredientUnit,
+        },
+      }
+    );
+    return {
+      cost: response.data.price,
+      ingredient: response.data.name,
+      amount: response.data.amount,
+      unit: response.data.unit,
+    };
+  } catch (err) {
+    console.log("Error getting cost for ingredient");
+
+    return null;
+  }
 };
 
 module.exports = {
@@ -285,5 +312,5 @@ module.exports = {
   generateMealPlanNoRepeats,
   generateMealPlanWithRepeats,
   calculateShoppingAndExpiring,
-  mapIngredientsToProducts,
+  calculateShoppingListCost,
 };
