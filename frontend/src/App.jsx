@@ -12,6 +12,7 @@ import GroceryRecForm from "./components/GroceryRecForm";
 import { API_BASE_URL } from "./utils/api";
 import { AUTH_PATH, INVENTORY_PATH } from "./utils/paths";
 import { ToastContainer } from "react-toastify";
+import { checkExpiringItems, checkLowStock } from "./utils/inventoryReminders";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -20,6 +21,7 @@ function App() {
   // User id for logged in user
   const [currentUser, setCurrentUser] = useState(null);
   const [inventory, setInventory] = useState([]);
+  const [hasShownReminders, setHasShownReminders] = useState(false);
 
   // When loads, fetch current user's authentication status
   useEffect(() => {
@@ -86,6 +88,19 @@ function App() {
       });
   };
 
+  useEffect(() => {
+    if (
+      isAuthenticated &&
+      inventory &&
+      inventory.length > 0 &&
+      !hasShownReminders
+    ) {
+      checkExpiringItems(inventory, currentUser);
+      checkLowStock(inventory, currentUser);
+      setHasShownReminders(true);
+    }
+  }, [isAuthenticated, inventory, hasShownReminders]);
+
   const handleLogout = () => {
     fetch(`${API_BASE_URL}/auth/logout`, {
       method: "POST",
@@ -95,6 +110,7 @@ function App() {
         setIsAuthenticated(false);
         setShowProfileForm(false);
         setInventory([]);
+        setHasShownReminders(false);
       })
       .catch((err) => {
         console.log("Error logging out");
@@ -149,6 +165,9 @@ function App() {
                     position="top-center"
                     autoClose={2000}
                     limit={2}
+                    toastStyle={{
+                      "--toastify-color-progress-light": "#808080",
+                    }}
                   />
                 </div>
                 <LogList currentUser={currentUser} />
