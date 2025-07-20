@@ -13,10 +13,12 @@ const {
   GENERATE_PATH,
   INGREDIENTS_PATH,
   INFORMATION_PATH,
+  EXPORT_PATH,
 } = require("../utils/backend_paths.js");
 const {
   groceryRecommendation,
 } = require("../recommendation/groceryRecommendation.js");
+const { exportGroceries } = require("../utils/exportGroceries.js");
 
 // Get user's full grocery list
 groceryListRoutes.get(`${GENERATE_PATH}/:userId`, async (req, res) => {
@@ -106,6 +108,19 @@ groceryListRoutes.get(`${COST_PATH}/:userId`, async (req, res) => {
       success: false,
       message: "Error getting ingredient information",
     });
+  }
+});
+
+// Export grocery list
+groceryListRoutes.post(`${EXPORT_PATH}`, async (req, res) => {
+  const { groceryListText } = req.body;
+  try {
+    const response = await exportGroceries(groceryListText);
+    res.status(StatusCodes.OK).json(response);
+  } catch (err) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Failed to export groceries" });
   }
 });
 
