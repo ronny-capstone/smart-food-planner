@@ -5,16 +5,19 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { getDaysUntilExpiration } from "../utils/dateUtils";
 import { API_BASE_URL } from "../utils/api";
-import { AUTH_PATH, INVENTORY_PATH } from "../utils/paths";
+import { INVENTORY_PATH } from "../utils/paths";
+import { checkExpiringItems, checkLowStock } from "../utils/inventoryReminders";
 
-export default function Inventory({
-  currentUser,
-  inventory,
-  setInventory,
-  handleInventoryUpdate,
-}) {
+export default function Inventory({ currentUser, inventory, setInventory }) {
   const [activeModal, setActiveModal] = useState(false);
   const [groceryToUpdate, setGroceryToUpdate] = useState(null);
+
+  useEffect(() => {
+    if (inventory && inventory.length > 0) {
+      checkExpiringItems(inventory);
+      checkLowStock(inventory);
+    }
+  }, [inventory]);
 
   const handleGroceryAdded = (createdGrocery) => {
     setInventory((prevGroceries) => [createdGrocery.item, ...prevGroceries]);

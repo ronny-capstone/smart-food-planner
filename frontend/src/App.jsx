@@ -11,6 +11,7 @@ import MealRecForm from "./components/MealRecForm";
 import GroceryRecForm from "./components/GroceryRecForm";
 import { API_BASE_URL } from "./utils/api";
 import { AUTH_PATH, INVENTORY_PATH } from "./utils/paths";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -143,6 +144,13 @@ function App() {
             )}
             {!showProfileForm && !showGoals && (
               <div>
+                <div>
+                  <ToastContainer
+                    position="top-center"
+                    autoClose={2000}
+                    limit={2}
+                  />
+                </div>
                 <LogList currentUser={currentUser} />
                 <FoodItemList />
                 <GroceryList currentUser={currentUser} />
@@ -153,7 +161,10 @@ function App() {
                   handleInventoryUpdate={fetchInventory}
                 />
                 <MealRecForm currentUser={currentUser} />
-                <GroceryRecForm currentUser={currentUser} inventory={inventory}/>
+                <GroceryRecForm
+                  currentUser={currentUser}
+                  inventory={inventory}
+                />
               </div>
             )}
           </>
