@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
 import { PROFILE_PATH } from "../utils/paths";
-import { GENERATE_PATH, GROCERY_LIST_PATH } from "../utils/paths";
+import { GENERATE_PATH, GROCERY_LIST_PATH, EXPORT_PATH } from "../utils/paths";
+import { listToString } from "../utils/listToString";
 
 export default function GroceryRecForm({ currentUser, inventory }) {
   const [form, setForm] = useState({
@@ -71,6 +72,38 @@ export default function GroceryRecForm({ currentUser, inventory }) {
     }));
   };
 
+  const handleExport = (groceryListText) => {
+    fetch(`${API_BASE_URL}${GROCERY_LIST_PATH}${EXPORT_PATH}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ groceryListText }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("Profile not found");
+        }
+      })
+      .then(({ fileName, data }) => {
+        // Create blob with data
+        const blob = new Blob([data], { type: "text/plain" });
+        // Create temporary URL that points to blob
+        const url = URL.createObjectURL(blob);
+        // Create temporary anchor element to trigger download
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        // Click anchor to start download
+        a.click();
+        // Clean up by removing temporary URL
+        URL.revokeObjectURL(url);
+      })
+      .catch((err) => {
+        console.log("Error exporting groceries");
+      });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setForm((prev) => ({ ...prev, isSearching: true, noResults: false }));
@@ -96,10 +129,12 @@ export default function GroceryRecForm({ currentUser, inventory }) {
         })
         .catch((err) => {
           alert("Failed to get grocery list recommendations");
+          console.log(err);
           setForm((prev) => ({ ...prev, noResults: true, isSearching: false }));
         });
     } catch (err) {
       alert("Failed to get grocery list recommendations");
+      console.log(err);
       setForm((prev) => ({ ...prev, noResults: true, isSearching: false }));
     }
   };
@@ -248,6 +283,21 @@ export default function GroceryRecForm({ currentUser, inventory }) {
                   </p>
                 </div>
               ))}
+          </div>
+
+          <div>
+            <button
+              onClick={() =>
+                handleExport(
+                  listToString(
+                    form.result.groceries.shoppingList,
+                    form.result.groceries.inventoryRecommendations
+                  )
+                )
+              }
+            >
+              Export grocery list
+            </button>
           </div>
 
           {/* Items that aren't used for recipes, are running out/expired */}
