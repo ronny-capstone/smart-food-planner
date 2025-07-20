@@ -26,7 +26,6 @@ export default function GroceryList({ currentUser }) {
         if (Array.isArray(data)) {
           setGroceries(data);
         } else {
-          console.log("Expected array but got ", typeof data);
           setGroceries([]);
         }
       })
