@@ -144,19 +144,6 @@ export default function GroceryRecForm({ currentUser, inventory }) {
       <h1>Grocery List Generator</h1>
       <p>Get personalized grocery recommendations</p>
       <div>
-        {form.diet !== "None" && (
-          <div>
-            <label>
-              <input
-                name="useDiet"
-                type="checkbox"
-                checked={form.useDiet}
-                onChange={handleChange}
-              />
-              Apply Diet Filter ({form.diet}):
-            </label>
-          </div>
-        )}
         <label>Budget: $</label>
         <input
           type="number"
@@ -326,8 +313,11 @@ export default function GroceryRecForm({ currentUser, inventory }) {
       )}
 
       {form.isSearching && (
-        <div>
-          <p>Generating grocery list...</p>
+        <div className="flex flex-col items-center justify-center py-6 space-y-3">
+          <p className="text-lg font-medium text-gray-700">
+            Generating grocery list...
+          </p>
+          <img src="/infinityLoading.gif" alt="Loading" className="w-32 h-32" />
         </div>
       )}
 
