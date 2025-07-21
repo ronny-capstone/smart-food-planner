@@ -1,6 +1,6 @@
 const baseUrl = process.env.VITE_API_BASE_URL;
 const axios = require("axios");
-const { getDaysUntilExpiration } = require("../utils/dateUtils.js");
+const { getDaysUntilExpiration, formatDay } = require("../utils/dateUtils.js");
 const {
   RECIPES_PATH,
   REC_PATH,
@@ -108,69 +108,6 @@ const analyzeInventory = (inventory) => {
 
 const generateMealPlan = async (userId, preferences) => {
   const { totalMeals, allowRepeats = true, maxRepeats } = preferences;
-
-  // Fallback in case maxRepeats and totalMeals are undefined
-  const actualTotalMeals = totalMeals || MEAL_CONSTANTS.TOTAL_MEALS;
-  const actualMaxRepeats = maxRepeats || MEAL_CONSTANTS.MAX_REPEATS;
-
-  if (allowRepeats) {
-    return await generateMealPlanWithRepeats(userId, {
-      totalMeals: actualTotalMeals,
-      maxRepeats: actualMaxRepeats,
-    });
-  } else {
-    return await generateMealPlanNoRepeats(userId, {
-      totalMeals: actualTotalMeals,
-    });
-  }
-};
-
-const generateMealPlanNoRepeats = async (userId, preferences) => {
-  const { totalMeals } = preferences;
-  const mealPlan = [];
-  const usedRecipes = new Set();
-
-  for (let i = 0; i < totalMeals; i++) {
-    try {
-      // Call recipe recommendation system
-      const response = await axios.get(
-        `${baseUrl}${RECIPES_PATH}${REC_PATH}/${userId}`,
-        {
-          params: {
-            ingredientType: "partial",
-            priority: "balanced",
-            expirationToggle: true,
-          },
-        }
-      );
-
-      const recipes = response.data.recipes || [];
-      // Ensure meals don't repeat in the plan
-      const possibleRecipes = recipes.filter(
-        (recipe) => !usedRecipes.has(recipe.id)
-      );
-
-      if (possibleRecipes.length > 0) {
-        const selectedRecipe = {
-          ...possibleRecipes[0],
-          mealNumber: i + 1,
-        };
-        mealPlan.push(selectedRecipe);
-        usedRecipes.add(selectedRecipe.id);
-      } else {
-        // No more unique recipes available
-        break;
-      }
-    } catch (err) {
-      break;
-    }
-  }
-  return mealPlan;
-};
-
-const generateMealPlanWithRepeats = async (userId, preferences) => {
-  const { totalMeals, maxRepeats } = preferences;
-
   // Fallback in case maxRepeats and totalMeals are undefined
   const actualTotalMeals = totalMeals || MEAL_CONSTANTS.TOTAL_MEALS;
   const actualMaxRepeats = maxRepeats || MEAL_CONSTANTS.MAX_REPEATS;
@@ -187,42 +124,69 @@ const generateMealPlanWithRepeats = async (userId, preferences) => {
         },
       }
     );
-
     const recipes = response.data.recipes || [];
-    const maxPossibleMeals = recipes.length * actualMaxRepeats;
-    const actualMeals = Math.min(actualTotalMeals, maxPossibleMeals);
+    if (recipes.length === 0) {
+      return [];
+    }
     const mealPlan = [];
-    const repeatMeals = new Map();
+    if (allowRepeats) {
+      const maxPossibleMeals = recipes.length * actualMaxRepeats;
+      const actualMeals = Math.min(actualTotalMeals, maxPossibleMeals);
+      const repeatMeals = new Map();
 
-    recipes.forEach((recipe) => {
-      repeatMeals.set(recipe.id, 0);
-    });
-    // Distribute recipes evenly
-    for (let i = 0; i < actualMeals; i++) {
-      // Find recipe with fewest repeats that hasn't reached max repeats
-      let selectedRecipe = null;
-      let minRepeats = actualMaxRepeats;
-      for (const recipe of recipes) {
-        const currRepeats = repeatMeals.get(recipe.id);
-        if (currRepeats < actualMaxRepeats && currRepeats < minRepeats) {
-          minRepeats = currRepeats;
-          selectedRecipe = recipe;
+      recipes.forEach((recipe) => {
+        repeatMeals.set(recipe.id, 0);
+      });
+      // Distribute recipes evenly
+      for (let i = 0; i < actualMeals; i++) {
+        // Find recipe with fewest repeats that hasn't reached max repeats
+        let selectedRecipe = null;
+        let minRepeats = actualMaxRepeats;
+        for (const recipe of recipes) {
+          const currRepeats = repeatMeals.get(recipe.id);
+          if (currRepeats < actualMaxRepeats && currRepeats < minRepeats) {
+            minRepeats = currRepeats;
+            selectedRecipe = recipe;
+          }
+        }
+
+        // If all recipes reached max repeats, break
+        if (!selectedRecipe) {
+          break;
+        }
+        // Add selected recipe to meal plan
+        mealPlan.push({
+          ...selectedRecipe,
+          mealNumber: i + 1,
+        });
+        repeatMeals.set(selectedRecipe.id, minRepeats + 1);
+      }
+    } else {
+      const usedRecipes = new Set();
+      for (let i = 0; i < actualTotalMeals; i++) {
+        // Ensure meals don't repeat in the plan
+        const possibleRecipes = recipes.filter(
+          (recipe) => !usedRecipes.has(recipe.id)
+        );
+        if (possibleRecipes.length > 0) {
+          const randomIndex = Math.floor(
+            Math.random() * possibleRecipes.length
+          );
+          const selectedRecipe = {
+            ...possibleRecipes[randomIndex],
+            mealNumber: i + 1,
+          };
+          mealPlan.push(selectedRecipe);
+          usedRecipes.add(selectedRecipe.id);
+        } else {
+          // No more unique recipes available
+          break;
         }
       }
-
-      // If all recipes reached max repeats, break
-      if (!selectedRecipe) {
-        break;
-      }
-      // Add selected recipe to meal plan
-      mealPlan.push({
-        ...selectedRecipe,
-        mealNumber: i + 1,
-      });
-      repeatMeals.set(selectedRecipe.id, minRepeats + 1);
     }
     return mealPlan;
   } catch (err) {
+    console.log("Error generating meal plan");
     return [];
   }
 };
@@ -300,7 +264,7 @@ const calculateShoppingAndExpiring = (mealPlan, inventoryAnalysis, userId) => {
     if (!usedInRecipe) {
       inventoryRecommendations.push({
         name: item.name,
-        reason: `Expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`,
+        reason: `Expires in ${formatDay(daysLeft)}`,
         type: "expiring-replacement",
         item: item,
       });
@@ -315,9 +279,7 @@ const calculateShoppingAndExpiring = (mealPlan, inventoryAnalysis, userId) => {
     if (!recipeIngredientNames.includes(item.name.toLowerCase())) {
       inventoryRecommendations.push({
         name: item.name,
-        reason: `Expired ${Math.abs(daysLeft)} day${
-          daysLeft === 1 ? "s" : ""
-        } ago`,
+        reason: `Expired ${formatDay(daysLeft)} ago`,
         type: "expiring-replacement",
         item: item,
       });
@@ -364,7 +326,7 @@ const calculateShoppingListCost = async (shoppingList, userId) => {
       totalCost += costInfo.cost;
       shoppingListCosts.push({
         ...item,
-        itemCost: Math.round(costInfo.cost * 100) / 100,
+        itemCost: Number(costInfo.cost.toFixed(2)),
         costInfo: costInfo,
       });
     } catch (err) {
@@ -413,8 +375,6 @@ module.exports = {
   groceryRecommendation,
   analyzeInventory,
   generateMealPlan,
-  generateMealPlanNoRepeats,
-  generateMealPlanWithRepeats,
   calculateShoppingAndExpiring,
   calculateShoppingListCost,
 };

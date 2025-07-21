@@ -12,7 +12,12 @@ const MEAL_CONSTANTS = {
   MAX_MISSING: 3,
 };
 
+const GENERATE_CONSTANTS = {
+  BUDGET: 50,
+  ALLOW_REPEATS: true,
+};
 module.exports = {
   INVENTORY_CONSTANTS,
   MEAL_CONSTANTS,
+  GENERATE_CONSTANTS,
 };
