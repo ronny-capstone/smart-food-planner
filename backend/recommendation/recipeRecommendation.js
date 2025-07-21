@@ -16,6 +16,7 @@ const {
   MACRO_CONSTANTS,
   PREP_BUCKETS,
 } = require("../utils/recipeConstants.js");
+const { isNameMatch } = require("../utils/stringUtils.js");
 
 const recipeRecommendation = async (
   ingredientType,
@@ -98,7 +99,6 @@ const recipeRecommendation = async (
 
   // Handle expiration toggle
   let expiringItems = [];
-  let expiringScore = 0;
   if (expirationToggle) {
     expiringItems = getExpiringItems(inventory, EXPIRATION_THRESHOLD);
   }
@@ -118,7 +118,11 @@ const recipeRecommendation = async (
       maxFat,
     });
     const cuisineScore = calculateCuisineScore(recipe, cuisine);
-    expiringScore = calculateExpiringScore(recipe, expiringItems);
+    console.log("Recipe ", recipe.title, " expiring items: ", expiringItems);
+    const expirationResult = calculateExpiringScore(recipe, expiringItems);
+    const expiringScore = expirationResult.score;
+    console.log("Expiration result: ", expirationResult);
+    console.log("Expiration score: ", expiringScore);
 
     const totalScore =
       dietScore * dietWeight +
@@ -127,6 +131,14 @@ const recipeRecommendation = async (
       cuisineScore * cuisineWeight +
       expiringScore * expiringWeight;
 
+    console.log("Score breakdown for", recipe.title, {
+      diet: dietScore,
+      mealPrep: mealPrepScore,
+      macros: macrosScore,
+      cuisine: cuisineScore,
+      expiring: expiringScore,
+      totalScore: totalScore,
+    });
     return {
       ...recipe,
       scores: {
@@ -137,6 +149,7 @@ const recipeRecommendation = async (
         expiring: expiringScore,
       },
       totalScore: Math.round(totalScore),
+      usedExpiringIngredients: expirationResult.usedExpiringIngredients,
     };
   });
 
@@ -280,20 +293,36 @@ const calculateCuisineScore = (recipe, cuisine) => {
 
 const calculateExpiringScore = (recipe, expiringItems) => {
   if (!expiringItems || expiringItems.length === 0) {
-    return PRIORITY_CONSTANTS.NEUTRAL;
+    return { score: PRIORITY_CONSTANTS.NEUTRAL, usedExpiringIngredients: [] };
   }
 
+  console.log("Expiring items: ", expiringItems);
   let priority = 0;
+  const usedExpiringIngredients = [];
   const ingredients = recipe.extendedIngredients || recipe.usedIngredients;
+  console.log(
+    "Expiring items: ",
+    expiringItems.map((item) => item.name)
+  );
+  console.log(
+    "Recipe items: ",
+    ingredients.map((item) => item.name)
+  );
+
   ingredients.forEach((ingredient) => {
-    const expiringItem = expiringItems.find(
-      (item) => ingredient.name.toLowerCase() === item.name.toLowerCase()
+    const expiringItem = expiringItems.find((item) =>
+      isNameMatch(ingredient, item)
     );
 
     if (expiringItem) {
       const daysUntilExpire = getDaysUntilExpiration(
         expiringItem.expiration_date
       );
+      usedExpiringIngredients.push({
+        name: expiringItem.name,
+        daysUntilExpire: daysUntilExpire,
+        expirationDate: expiringItem.expiration_date,
+      });
       if (daysUntilExpire <= PRIORITY_CONSTANTS.EXPIRING_PRIORITY_ONE_DAYS) {
         priority += PRIORITY_CONSTANTS.PRIORITY_ONE;
       } else if (
@@ -307,7 +336,10 @@ const calculateExpiringScore = (recipe, expiringItems) => {
       }
     }
   });
-  return priority;
+
+  console.log(usedExpiringIngredients);
+
+  return { score: priority, usedExpiringIngredients: usedExpiringIngredients };
 };
 
 module.exports = { recipeRecommendation };

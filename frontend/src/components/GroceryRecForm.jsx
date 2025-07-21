@@ -3,6 +3,9 @@ import { API_BASE_URL } from "../utils/api";
 import { PROFILE_PATH } from "../utils/paths";
 import { GENERATE_PATH, GROCERY_LIST_PATH, EXPORT_PATH } from "../utils/paths";
 import { listToString } from "../utils/listToString";
+import { capitalize } from "../utils/stringUtils";
+import { formatDay } from "../utils/dateUtils";
+
 
 export default function GroceryRecForm({ currentUser, inventory }) {
   const [form, setForm] = useState({
@@ -251,7 +254,7 @@ export default function GroceryRecForm({ currentUser, inventory }) {
                 {form.result.groceries.shoppingList.map((item, index) => (
                   <div key={index} className="border p-2 justify-between">
                     <p>
-                      {item.name} - ${item.itemCost}
+                      {capitalize(item.name)} - ${item.itemCost}
                     </p>
                     <p>
                       Quantity: {item.quantity} {item.unit}
@@ -270,16 +273,12 @@ export default function GroceryRecForm({ currentUser, inventory }) {
               form.result.groceries.expiringItems.map((item, index) => (
                 <div key={index}>
                   <p>
-                    {item.name} :{" "}
+                    {capitalize(item.name)} :{" "}
                     {item.daysLeft === 0
                       ? "expires today"
                       : item.daysLeft > 0
-                      ? `expires in ${item.daysLeft} day${
-                          item.daysLeft === 1 ? "" : "s"
-                        }`
-                      : `expired ${Math.abs(item.daysLeft)} day${
-                          Math.abs(item.daysLeft) === 1 ? "" : "s"
-                        } ago`}
+                      ? `expires in ${formatDay(item.daysLeft)}`
+                      : `expired ${formatDay(item.daysLeft)} ago`}
                   </p>
                 </div>
               ))}
@@ -315,7 +314,7 @@ export default function GroceryRecForm({ currentUser, inventory }) {
                           : "bg-yellow-50 border-yellow-200"
                       }`}
                     >
-                      <p>{item.name}</p>
+                      <p>{capitalize(item.name)}</p>
                       <p>{item.reason}</p>
                     </div>
                   )

@@ -17,4 +17,9 @@ const getDaysUntilExpiration = (expirationDate) => {
   return daysDifference;
 };
 
-module.exports = { formatDateString, getDaysUntilExpiration };
+const formatDay = (days) => {
+  const dayString = days === 1 ? "day" : "days";
+  return `${Math.abs(days)} ${dayString}`;
+};
+
+module.exports = { formatDateString, getDaysUntilExpiration, formatDay };
