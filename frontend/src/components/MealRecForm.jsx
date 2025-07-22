@@ -433,6 +433,15 @@ export default function MealRecForm({ currentUser }) {
         </div>
       )}
 
+      {form.isSearching && (
+        <div className="flex flex-col items-center justify-center py-6 space-y-3">
+          <p className="text-lg font-medium text-gray-700">
+            Generating Meal Recommendation...
+          </p>
+          <img src="/infinityLoading.gif" alt="Loading" className="w-32 h-32" />
+        </div>
+      )}
+
       {form.noResults && !form.isSearching && (
         <div>
           <p> No recipes found, try adjusting search criteria. </p>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
 import { LOG_PATH, PROFILE_PATH, FOOD_PATH } from "../utils/paths";
 import { toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
 export default function NutritionDisplay({ currentUser }) {
   const [calorieGoal, setCalorieGoal] = useState(0);
@@ -60,6 +61,7 @@ export default function NutritionDisplay({ currentUser }) {
       })
       .then((logs) => {
         if (logs.length === 0) {
+          console.log("No food logged");
           toast.info("No food logged yet today");
           // Set progress to 0
           setCalorieProgress(0);
@@ -177,14 +179,23 @@ export default function NutritionDisplay({ currentUser }) {
 
   return (
     <div>
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        limit={2}
+        toastStyle={{
+          "--toastify-color-progress-light": "#808080",
+        }}
+      />
       <h1>Nutritional Targets</h1>
 
-      <h3>Daily Values:</h3>
-
+      <h3 className="text-2xl font-medium underline text-gray-700 pt-2 pb-2">
+        Daily Values:
+      </h3>
       <div>
-        <p> Calorie Goal</p>
+        <p className="text-lg text-gray-600"> Calorie Goal</p>
         <p>
-          {caloriesConsumed}kcal / {calorieGoal}kcal
+          {caloriesConsumed.toFixed(2)}kcal / {calorieGoal}kcal
         </p>
         <p className={getStatusColor(calorieProgress)}>
           {" "}
@@ -193,9 +204,9 @@ export default function NutritionDisplay({ currentUser }) {
       </div>
 
       <div>
-        <p>Protein Goal</p>
+        <p className="text-lg text-gray-600">Protein Goal</p>
         <p>
-          {proteinConsumed}g / {proteinGoal}g
+          {proteinConsumed.toFixed(2)}g / {proteinGoal}g
         </p>
         <p className={getStatusColor(proteinProgress)}>
           {" "}
@@ -204,9 +215,9 @@ export default function NutritionDisplay({ currentUser }) {
       </div>
 
       <div>
-        <p>Carbs Goal</p>
+        <p className="text-lg text-gray-600">Carbs Goal</p>
         <p>
-          {carbsConsumed}g / {carbGoal}g
+          {carbsConsumed.toFixed(2)}g / {carbGoal}g
         </p>
         <p className={getStatusColor(carbProgress)}>
           {" "}
@@ -215,9 +226,9 @@ export default function NutritionDisplay({ currentUser }) {
       </div>
 
       <div>
-        <p>Fats Goal</p>
+        <p className="text-lg text-gray-600">Fats Goal</p>
         <p>
-          {fatsConsumed}g / {fatsGoal}g
+          {fatsConsumed.toFixed(2)}g / {fatsGoal}g
         </p>
         <p className={getStatusColor(fatsProgress)}>
           {fatsProgress}% progress to goal
@@ -227,12 +238,16 @@ export default function NutritionDisplay({ currentUser }) {
       <h3> Nutrition Info: </h3>
 
       <div>
-        <p>BMR</p>
+        <p className="text-lg text-gray-600">BMR (Base Metabolic Rate)</p>
+        <p>Minimum calories your body needs to function</p>
         <p>{bmr}</p>
       </div>
 
       <div>
-        <p>TDEE</p>
+        <p className="text-lg text-gray-600">
+          TDEE (Total Daily Energy Expenditure)
+        </p>
+        <p>Total number of calories you body burns in a day</p>
         <p>{tdee}</p>
       </div>
     </div>
