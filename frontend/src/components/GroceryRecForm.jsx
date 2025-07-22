@@ -13,11 +13,11 @@ export default function GroceryRecForm({ currentUser }) {
     noResults: false,
     isSearching: false,
     diet: "",
-    budget: "",
-    mealsNum: "",
-    allowRepeats: "",
+    budget: 0,
+    mealsNum: 1,
+    allowRepeats: false,
     useDiet: true,
-    maxRepeats: "",
+    maxRepeats: 1,
   });
 
   // Fetch user's diet from profile
@@ -59,11 +59,11 @@ export default function GroceryRecForm({ currentUser }) {
       ...prev,
       isSearching: false,
       diet: "",
-      budget: "",
+      budget: 10,
       mealsNum: "",
-      allowRepeats: "",
+      allowRepeats: false,
       useDiet: true,
-      maxRepeats: "",
+      maxRepeats: 1,
     }));
   };
 
@@ -85,7 +85,7 @@ export default function GroceryRecForm({ currentUser }) {
         if (response.ok) {
           return response.json();
         } else {
-          throw new Error("Profile not found");
+          throw new Error("Export failed");
         }
       })
       .then(({ fileName, data }) => {
@@ -145,19 +145,6 @@ export default function GroceryRecForm({ currentUser }) {
       <h1>Grocery List Generator</h1>
       <p>Get personalized grocery recommendations</p>
       <div>
-        {form.diet !== "None" && (
-          <div>
-            <label>
-              <input
-                name="useDiet"
-                type="checkbox"
-                checked={form.useDiet}
-                onChange={handleChange}
-              />
-              Apply Diet Filter ({form.diet}):
-            </label>
-          </div>
-        )}
         <label>Budget: $</label>
         <input
           type="number"
