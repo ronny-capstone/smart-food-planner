@@ -9,23 +9,27 @@ const apiKey = process.env.SPOONACULAR_API_KEY;
 const StatusCodes = require("http-status-codes").StatusCodes;
 const axios = require("axios");
 const {
-  MAP_PATH,
-  PRODUCTS_PATH,
-  SEARCH_PATH,
+  COST_PATH,
   GENERATE_PATH,
+  INGREDIENTS_PATH,
+  INFORMATION_PATH,
 } = require("../utils/backend_paths.js");
 const {
   groceryRecommendation,
 } = require("../recommendation/groceryRecommendation.js");
+const {
+  GENERATE_CONSTANTS,
+  MEAL_CONSTANTS,
+} = require("../utils/groceryConstants");
 
 // Get user's full grocery list
 groceryListRoutes.get(`${GENERATE_PATH}/:userId`, async (req, res) => {
   const { userId } = req.params;
   const {
-    budget = 50,
-    totalMeals = 7,
-    allowRepeats = true,
-    maxRepeats = 2,
+    budget = GENERATE_CONSTANTS.BUDGET,
+    totalMeals = MEAL_CONSTANTS.TOTAL_MEALS,
+    allowRepeats = GENERATE_CONSTANTS.ALLOW_REPEATS,
+    maxRepeats = MEAL_CONSTANTS.MAX_REPEATS,
   } = req.query;
 
   try {
@@ -75,53 +79,36 @@ groceryListRoutes.get(`${GENERATE_PATH}/:userId`, async (req, res) => {
   }
 });
 
-// Map ingredient item to grocery products
-groceryListRoutes.get(`${MAP_PATH}/:userId`, async (req, res) => {
-  const { ingredient } = req.query;
+groceryListRoutes.get(`${COST_PATH}/:userId`, async (req, res) => {
+  const { ingredientId, amount, unit } = req.query;
 
   try {
     const response = await axios.get(
-      `${baseUrl}${PRODUCTS_PATH}${SEARCH_PATH}`,
+      `${baseUrl}${INGREDIENTS_PATH}/${ingredientId}${INFORMATION_PATH}`,
       {
         params: {
           apiKey,
-          query: ingredient,
-          number: 3, // Number of results
-          addProductInformation: true,
-          sort: "price",
-          sortDirection: "asc",
+          amount: amount,
+          unit: unit,
         },
       }
     );
 
-    if (response.data.products && response.data.products.length > 0) {
-      // Get cheapest result
-      const product = response.data.products[0];
-      res.json({
-        success: true,
-        product: {
-          name: product.title,
-          id: product.id,
-          price: product.price / 100,
-          imgUrl: product.image,
-        },
-        nutrition: {
-          calories: product.nutrition.calories || 0,
-          protein: product.nutrition.protein || 0,
-          carbs: product.nutrition.carbohydrates || 0,
-          fat: product.nutrition.fat || 0,
-        },
-      });
-    } else {
-      res.status(StatusCodes.NOT_FOUND).json({
-        success: false,
-        message: `No products found for ${ingredient}`,
-      });
-    }
+    const ingredientInfo = response.data;
+    // Get cost in dollars
+    const cost = ingredientInfo.estimatedCost.value / 100;
+    res.status(StatusCodes.OK).json({
+      id: ingredientInfo.id,
+      name: ingredientInfo.name,
+      amount: amount,
+      unit: unit,
+      price: cost,
+      image: ingredientInfo.image,
+    });
   } catch (err) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Error fetching product information",
+      message: "Error getting ingredient information",
     });
   }
 });
