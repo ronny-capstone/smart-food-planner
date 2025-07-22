@@ -118,11 +118,8 @@ const recipeRecommendation = async (
       maxFat,
     });
     const cuisineScore = calculateCuisineScore(recipe, cuisine);
-    console.log("Recipe ", recipe.title, " expiring items: ", expiringItems);
     const expirationResult = calculateExpiringScore(recipe, expiringItems);
     const expiringScore = expirationResult.score;
-    console.log("Expiration result: ", expirationResult);
-    console.log("Expiration score: ", expiringScore);
 
     const totalScore =
       dietScore * dietWeight +
@@ -131,14 +128,6 @@ const recipeRecommendation = async (
       cuisineScore * cuisineWeight +
       expiringScore * expiringWeight;
 
-    console.log("Score breakdown for", recipe.title, {
-      diet: dietScore,
-      mealPrep: mealPrepScore,
-      macros: macrosScore,
-      cuisine: cuisineScore,
-      expiring: expiringScore,
-      totalScore: totalScore,
-    });
     return {
       ...recipe,
       scores: {
@@ -296,18 +285,9 @@ const calculateExpiringScore = (recipe, expiringItems) => {
     return { score: PRIORITY_CONSTANTS.NEUTRAL, usedExpiringIngredients: [] };
   }
 
-  console.log("Expiring items: ", expiringItems);
   let priority = 0;
   const usedExpiringIngredients = [];
   const ingredients = recipe.extendedIngredients || recipe.usedIngredients;
-  console.log(
-    "Expiring items: ",
-    expiringItems.map((item) => item.name)
-  );
-  console.log(
-    "Recipe items: ",
-    ingredients.map((item) => item.name)
-  );
 
   ingredients.forEach((ingredient) => {
     const expiringItem = expiringItems.find((item) =>
@@ -336,8 +316,6 @@ const calculateExpiringScore = (recipe, expiringItems) => {
       }
     }
   });
-
-  console.log(usedExpiringIngredients);
 
   return { score: priority, usedExpiringIngredients: usedExpiringIngredients };
 };

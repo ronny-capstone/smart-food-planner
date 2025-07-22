@@ -5,9 +5,9 @@ import { GENERATE_PATH, GROCERY_LIST_PATH, EXPORT_PATH } from "../utils/paths";
 import { listToString } from "../utils/listToString";
 import { capitalize } from "../utils/stringUtils";
 import { formatDay } from "../utils/dateUtils";
+import { toast } from "react-toastify";
 
-
-export default function GroceryRecForm({ currentUser, inventory }) {
+export default function GroceryRecForm({ currentUser }) {
   const [form, setForm] = useState({
     result: null,
     noResults: false,
@@ -131,13 +131,11 @@ export default function GroceryRecForm({ currentUser, inventory }) {
           }));
         })
         .catch((err) => {
-          alert("Failed to get grocery list recommendations");
-          console.log(err);
+          toast.error("Failed to get grocery list recommendations");
           setForm((prev) => ({ ...prev, noResults: true, isSearching: false }));
         });
     } catch (err) {
-      alert("Failed to get grocery list recommendations");
-      console.log(err);
+      toast.error("Failed to get grocery list recommendations");
       setForm((prev) => ({ ...prev, noResults: true, isSearching: false }));
     }
   };

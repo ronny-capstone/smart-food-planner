@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
 import { LOG_PATH, PROFILE_PATH, FOOD_PATH } from "../utils/paths";
+import { toast } from "react-toastify";
 
 export default function NutritionDisplay({ currentUser }) {
   const [calorieGoal, setCalorieGoal] = useState(0);
@@ -44,7 +45,7 @@ export default function NutritionDisplay({ currentUser }) {
         setGoalsLoaded(true);
       })
       .catch((err) => {
-        console.log("Failed to fetch nutrition data");
+        toast.error("Unable to load nutrition goals");
       });
   }, [currentUser]);
 
@@ -59,7 +60,7 @@ export default function NutritionDisplay({ currentUser }) {
       })
       .then((logs) => {
         if (logs.length === 0) {
-          alert("No food logged yet today");
+          toast.info("No food logged yet today");
           // Set progress to 0
           setCalorieProgress(0);
           setProteinProgress(0);
@@ -182,7 +183,9 @@ export default function NutritionDisplay({ currentUser }) {
 
       <div>
         <p> Calorie Goal</p>
-        <p>{caloriesConsumed}kcal / {calorieGoal}kcal</p>
+        <p>
+          {caloriesConsumed}kcal / {calorieGoal}kcal
+        </p>
         <p className={getStatusColor(calorieProgress)}>
           {" "}
           {calorieProgress}% progress to goal
@@ -191,7 +194,9 @@ export default function NutritionDisplay({ currentUser }) {
 
       <div>
         <p>Protein Goal</p>
-        <p>{proteinConsumed}g / {proteinGoal}g</p>
+        <p>
+          {proteinConsumed}g / {proteinGoal}g
+        </p>
         <p className={getStatusColor(proteinProgress)}>
           {" "}
           {proteinProgress}% progress to goal
@@ -200,7 +205,9 @@ export default function NutritionDisplay({ currentUser }) {
 
       <div>
         <p>Carbs Goal</p>
-        <p>{carbsConsumed}g / {carbGoal}g</p>
+        <p>
+          {carbsConsumed}g / {carbGoal}g
+        </p>
         <p className={getStatusColor(carbProgress)}>
           {" "}
           {carbProgress}% progress to goal
@@ -209,7 +216,9 @@ export default function NutritionDisplay({ currentUser }) {
 
       <div>
         <p>Fats Goal</p>
-        <p>{fatsConsumed}g / {fatsGoal}g</p>
+        <p>
+          {fatsConsumed}g / {fatsGoal}g
+        </p>
         <p className={getStatusColor(fatsProgress)}>
           {fatsProgress}% progress to goal
         </p>

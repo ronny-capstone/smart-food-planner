@@ -3,6 +3,7 @@ import { API_BASE_URL } from "../utils/api";
 import { RECIPES_PATH, PROFILE_PATH } from "../utils/paths";
 import { cuisinesList } from "../utils/mealFilters";
 import { capitalize } from "../utils/stringUtils";
+import { toast } from "react-toastify";
 
 export default function MealRecForm({ currentUser }) {
   const [form, setForm] = useState({
@@ -140,12 +141,10 @@ export default function MealRecForm({ currentUser }) {
         }));
       })
       .catch((err) => {
-        alert("Failed to get recipe recommendations");
+        toast.error("Failed to get recipe recommendations");
         setForm((prev) => ({ ...prev, isSearching: false }));
       });
   };
-
-  console.log(form.recipes);
 
   return (
     <div>
