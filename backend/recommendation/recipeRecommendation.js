@@ -16,6 +16,7 @@ const {
   MACRO_CONSTANTS,
   PREP_BUCKETS,
 } = require("../utils/recipeConstants.js");
+const { isNameMatch } = require("../utils/stringUtils.js");
 
 const recipeRecommendation = async (
   ingredientType,
@@ -98,7 +99,6 @@ const recipeRecommendation = async (
 
   // Handle expiration toggle
   let expiringItems = [];
-  let expiringScore = 0;
   if (expirationToggle) {
     expiringItems = getExpiringItems(inventory, EXPIRATION_THRESHOLD);
   }
@@ -118,7 +118,8 @@ const recipeRecommendation = async (
       maxFat,
     });
     const cuisineScore = calculateCuisineScore(recipe, cuisine);
-    expiringScore = calculateExpiringScore(recipe, expiringItems);
+    const expirationResult = calculateExpiringScore(recipe, expiringItems);
+    const expiringScore = expirationResult.score;
 
     const totalScore =
       dietScore * dietWeight +
@@ -137,6 +138,7 @@ const recipeRecommendation = async (
         expiring: expiringScore,
       },
       totalScore: Math.round(totalScore),
+      usedExpiringIngredients: expirationResult.usedExpiringIngredients,
     };
   });
 
@@ -280,20 +282,27 @@ const calculateCuisineScore = (recipe, cuisine) => {
 
 const calculateExpiringScore = (recipe, expiringItems) => {
   if (!expiringItems || expiringItems.length === 0) {
-    return PRIORITY_CONSTANTS.NEUTRAL;
+    return { score: PRIORITY_CONSTANTS.NEUTRAL, usedExpiringIngredients: [] };
   }
 
   let priority = 0;
+  const usedExpiringIngredients = [];
   const ingredients = recipe.extendedIngredients || recipe.usedIngredients;
+
   ingredients.forEach((ingredient) => {
-    const expiringItem = expiringItems.find(
-      (item) => ingredient.name.toLowerCase() === item.name.toLowerCase()
+    const expiringItem = expiringItems.find((item) =>
+      isNameMatch(ingredient, item)
     );
 
     if (expiringItem) {
       const daysUntilExpire = getDaysUntilExpiration(
         expiringItem.expiration_date
       );
+      usedExpiringIngredients.push({
+        name: expiringItem.name,
+        daysUntilExpire: daysUntilExpire,
+        expirationDate: expiringItem.expiration_date,
+      });
       if (daysUntilExpire <= PRIORITY_CONSTANTS.EXPIRING_PRIORITY_ONE_DAYS) {
         priority += PRIORITY_CONSTANTS.PRIORITY_ONE;
       } else if (
@@ -307,7 +316,8 @@ const calculateExpiringScore = (recipe, expiringItems) => {
       }
     }
   });
-  return priority;
+
+  return { score: priority, usedExpiringIngredients: usedExpiringIngredients };
 };
 
 module.exports = { recipeRecommendation };

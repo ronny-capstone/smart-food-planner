@@ -2,6 +2,7 @@ import { getDaysUntilExpiration } from "./dateUtils";
 import { toast } from "react-toastify";
 import { saveReminderDismissal, getDismissedReminders } from "./reminders";
 import { STOCK_CONSTANTS, EXPIRATION_CONSTANTS } from "./remindersConstants";
+import { capitalize } from "./stringUtils";
 
 const AUTOCLOSE = 3000;
 
@@ -27,6 +28,8 @@ const getIconAndColor = (type, days) => {
   }
 };
 
+
+
 const splitButtons = (closeToast, name, days, type, stock, itemId, userId) => {
   const handleDontShowAgain = async () => {
     await saveReminderDismissal(userId, itemId, type);
@@ -42,7 +45,7 @@ const splitButtons = (closeToast, name, days, type, stock, itemId, userId) => {
         <span>{icon}</span>
         {type === "expiration" ? (
           <p className={`font-medium ${textColor}`}>
-            {name} expires{" "}
+            {capitalize(name)} expires{" "}
             {days === EXPIRATION_CONSTANTS.EXPIRES_TODAY
               ? "today"
               : days === EXPIRATION_CONSTANTS.EXPIRES_TOMORROW
@@ -50,7 +53,7 @@ const splitButtons = (closeToast, name, days, type, stock, itemId, userId) => {
               : `in ${days} days`}
           </p>
         ) : type === "expired" ? (
-          <p className={`font-medium ${textColor}`}>{name} has expired!</p>
+          <p className={`font-medium ${textColor}`}>{capitalize(name)} has expired!</p>
         ) : (
           <p className={`font-medium ${textColor}`}>
             Running low on {name} ({stock} left)
@@ -59,7 +62,7 @@ const splitButtons = (closeToast, name, days, type, stock, itemId, userId) => {
       </div>
       <div className="bg-zinc-900/20 h-full" />
       <div className="grid grid-rows-[1fr_1px_1fr] h-full text-sm">
-        <button onClick={() => closeToast()} className="text-purple-500">
+        <button onClick={() => closeToast()} className="text-blue-600">
           Dismiss
         </button>
         <div className="bg-zinc-900/20 w-full" />
