@@ -16,3 +16,4 @@ export const EXACT_PATH = "/exact";
 export const PARTIAL_PATH = "/partial"
 export const GENERATE_PATH = "/generate"
 export const GROCERY_LIST_PATH = "/groceryList"
+export const EXPORT_PATH = "/export-groceries"
