@@ -22,7 +22,8 @@ const recipeRecommendation = async (
   ingredientType,
   userFilters,
   userProfile,
-  inventory
+  inventory,
+  useCase
 ) => {
   const {
     expirationToggle = false,
@@ -143,14 +144,31 @@ const recipeRecommendation = async (
   });
 
   recipeScores.sort((a, b) => b.totalScore - a.totalScore);
-  const topRecipes = recipeScores.slice(0, 10);
-
-  return {
-    recipes: topRecipes,
-    numFound: topRecipes.length,
-    ingredientType,
-    message: `Found ${topRecipes.length} recipes!`,
-  };
+  if (useCase === "recipe") {
+    const topRecipes = recipeScores.slice(0, 10);
+    return {
+      recipes: topRecipes,
+      numFound: topRecipes.length,
+      ingredientType,
+      message: `Found ${topRecipes.length} recipes!`,
+    };
+  } else if (useCase === "grocery") {
+    const groceryRecipes = recipeScores.slice(0, 20);
+    return {
+      recipes: groceryRecipes,
+      numFound: groceryRecipes.length,
+      ingredientType,
+      message: `Found ${groceryRecipes.length} recipes!`,
+    };
+  } else {
+    const topRecipes = recipeScores.slice(0, 10);
+    return {
+      recipes: topRecipes,
+      numFound: topRecipes.length,
+      ingredientType,
+      message: `Found ${topRecipes.length} recipes!`,
+    };
+  }
 };
 
 // Helper to get expiring items
