@@ -151,6 +151,16 @@ export default function NutritionDisplay({ currentUser }) {
     }
   }, [goalsLoaded, currentUser]);
 
+  useEffect(() => {
+    console.log(calorieProgress);
+    if (calorieProgress && proteinProgress && carbProgress && fatsProgress) {
+      updateProgressBar("calorieBar", calorieProgress);
+      updateProgressBar("proteinBar", proteinProgress);
+      updateProgressBar("carbsBar", carbProgress);
+      updateProgressBar("fatsBar", fatsProgress);
+    }
+  }, [goalsLoaded]);
+
   const percentDailyGoals = (
     daily_calories,
     daily_protein,
@@ -174,6 +184,14 @@ export default function NutritionDisplay({ currentUser }) {
       return "bg-yellow-100 text-yellow-800 border-yellow-200";
     } else {
       return "bg-red-100 text-red-800 border-red-200";
+    }
+  };
+
+  const updateProgressBar = (barId, progress) => {
+    console.log(progress);
+    const progressBar = document.getElementById(barId);
+    if (progressBar) {
+      progressBar.style.width = progress;
     }
   };
 
@@ -201,10 +219,11 @@ export default function NutritionDisplay({ currentUser }) {
           {" "}
           {calorieProgress}% progress to goal
         </p>
+        <div id="calorieBar"> {calorieProgress}% progress to goal</div>
       </div>
 
       <div>
-        <p className="text-lg text-gray-600">Protein Goal</p>
+        <p d="text-lg text-gray-600">Protein Goal</p>
         <p>
           {proteinConsumed.toFixed(2)}g / {proteinGoal}g
         </p>
@@ -212,6 +231,7 @@ export default function NutritionDisplay({ currentUser }) {
           {" "}
           {proteinProgress}% progress to goal
         </p>
+        <div id="proteinBar">{proteinProgress}% progress to goal</div>
       </div>
 
       <div>
@@ -223,6 +243,7 @@ export default function NutritionDisplay({ currentUser }) {
           {" "}
           {carbProgress}% progress to goal
         </p>
+        <div id="carbsBar">{carbProgress}% progress to goal</div>
       </div>
 
       <div>
@@ -233,6 +254,7 @@ export default function NutritionDisplay({ currentUser }) {
         <p className={getStatusColor(fatsProgress)}>
           {fatsProgress}% progress to goal
         </p>
+        <div id="fatsBar">{fatsProgress}% progress to goal</div>
       </div>
 
       <h3> Nutrition Info: </h3>

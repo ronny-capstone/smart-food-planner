@@ -13,11 +13,8 @@ export default function GroceryRecForm({ currentUser }) {
     noResults: false,
     isSearching: false,
     diet: "",
-    budget: 0,
-    mealsNum: 1,
-    allowRepeats: false,
+    budget: 20,
     useDiet: true,
-    maxRepeats: 1,
   });
 
   // Fetch user's diet from profile
@@ -59,11 +56,9 @@ export default function GroceryRecForm({ currentUser }) {
       ...prev,
       isSearching: false,
       diet: "",
-      budget: 10,
-      mealsNum: "",
-      allowRepeats: false,
+      budget: 20,
       useDiet: true,
-      maxRepeats: 1,
+      result: null,
     }));
   };
 
@@ -101,9 +96,10 @@ export default function GroceryRecForm({ currentUser }) {
         a.click();
         // Clean up by removing temporary URL
         URL.revokeObjectURL(url);
+        toast.success("Grocery list exported!");
       })
       .catch((err) => {
-        console.log("Error exporting groceries");
+        toast.error("Failed to export grocery list");
       });
   };
 
@@ -112,23 +108,23 @@ export default function GroceryRecForm({ currentUser }) {
     setForm((prev) => ({ ...prev, isSearching: true, noResults: false }));
     const params = new URLSearchParams({
       budget: form.budget,
-      totalMeals: form.mealsNum,
-      allowRepeats: form.allowRepeats,
-      maxRepeats: form.maxRepeats,
     });
 
     try {
       fetch(
         `${API_BASE_URL}${GROCERY_LIST_PATH}${GENERATE_PATH}/${currentUser}?${params}`
       )
-        .then((response) => response.json())
+        .then((response) => {
+          return response.json();
+        })
         .then((data) => {
           setForm((prev) => ({
             ...prev,
             result: data,
-            noResults: data.groceries.mealPlan.length === 0,
+            noResults: false,
             isSearching: false,
           }));
+          toast.success("Grocery list recommendations generated!");
         })
         .catch((err) => {
           toast.error("Failed to get grocery list recommendations");
@@ -155,38 +151,6 @@ export default function GroceryRecForm({ currentUser }) {
           required
         ></input>
       </div>
-      <div>
-        <label>Number of meals:</label>
-        <input
-          type="number"
-          name="mealsNum"
-          value={form.mealsNum}
-          onChange={handleChange}
-          min="1"
-          max="21"
-        ></input>
-      </div>
-      <div>
-        <input
-          type="checkbox"
-          name="allowRepeats"
-          checked={form.allowRepeats}
-          onChange={handleChange}
-        ></input>
-        <label>Allow repeat meals:</label>
-      </div>
-      <div>
-        <label>Max number of repeated meals:</label>
-        <input
-          type="number"
-          name="maxRepeats"
-          value={form.maxRepeats}
-          onChange={handleChange}
-          min="1"
-          max="5"
-          disabled={!form.allowRepeats}
-        ></input>
-      </div>
 
       <div className="mb-1 w-full max-w-sm">
         <button type="button" onClick={clearForm}>
@@ -206,106 +170,126 @@ export default function GroceryRecForm({ currentUser }) {
         </button>
       </div>
 
-      {form.result && !form.noResults && (
+      {form.result?.types && !form.noResults && (
         <div>
-          <div>
-            <p>
-              Total cost: ${form.result.groceries.totalCost} out of $
-              {form.budget} budget
-            </p>
-          </div>
-          <div>
-            <p>Budget Used: {form.result.budgetUsed}%</p>
-          </div>
+          <h2>Grocery List Strategies</h2>
+          {[
+            "bestOverall",
+            "budgetMaximizer",
+            "inventoryMaximizer",
+            "complexityMaximizer",
+          ].map((type) => {
+            const groceryType = form.result.types[type];
+            if (!groceryType) {
+              return null;
+            }
+            const groceryList = groceryType.groceryList || {};
+            const expiringItems = groceryList.expiringItems || [];
 
-          <div>
-            <p>Meals planned: {form.result.groceries.mealPlan.length}</p>
-          </div>
-          <div>
-            <h3>Meal Plan:</h3>
-            {form.result.groceries.mealPlan.map((meal, index) => (
-              <div key={index}>
+            const types = {
+              bestOverall: {
+                title: "Best Overall",
+                text: "Optimal balance of cost and convenience!",
+              },
+              budgetMaximizer: {
+                title: "Budget Maximizer",
+                text: "Maximize your budget!",
+              },
+              inventoryMaximizer: {
+                title: "Inventory Maximizer",
+                text: "Use up your inventory!",
+              },
+              complexityMaximizer: {
+                title: "Complexity Maximizer",
+                text: "Make rich & complex recipes!",
+              },
+            };
+
+            return (
+              <div key={type} className="mb-8 p-4 border rounded">
+                <h3>{types[type].title}</h3>
+                <p>{types[type].text}</p>
                 <p>
-                  Meal {meal.mealNumber}: {meal.title}
+                  Total cost: ${Number(groceryType.totalCost).toFixed(2)} out of
+                  ${form.budget} budget
                 </p>
-              </div>
-            ))}
-          </div>
-          <div>
-            <h3>Shopping List:</h3>
-            <p>Items to buy: {form.result.groceries.itemsNeeded}</p>
-            {form.result.groceries.shoppingList.length > 0 ? (
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                {form.result.groceries.shoppingList.map((item, index) => (
-                  <div key={index} className="border p-2 justify-between">
-                    <p>
-                      {capitalize(item.name)} - ${item.itemCost}
-                    </p>
-                    <p>
-                      Quantity: {item.quantity} {item.unit}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p>No items needed - you have everything!</p>
-            )}
-          </div>
+                <p>Budget Used: {groceryType.budgetUsed}%</p>
+                <p>Meals planned: {groceryType.mealsCount}</p>
 
-          <div>
-            <h3>Expiring items used in meal plan:</h3>
-            {form.result.groceries.expiringItems.length > 0 &&
-              form.result.groceries.expiringItems.map((item, index) => (
-                <div key={index}>
+                {groceryType.inventoryUtilization !== undefined && (
                   <p>
-                    {capitalize(item.name)} :{" "}
-                    {item.daysLeft === 0
-                      ? "expires today"
-                      : item.daysLeft > 0
-                      ? `expires in ${formatDay(item.daysLeft)}`
-                      : `expired ${formatDay(item.daysLeft)} ago`}
+                    Inventory Usage:{" "}
+                    {Math.round(groceryType.inventoryUtilization * 100)}%
                   </p>
-                </div>
-              ))}
-          </div>
-
-          <div>
-            <button
-              onClick={() =>
-                handleExport(
-                  listToString(
-                    form.result.groceries.shoppingList,
-                    form.result.groceries.inventoryRecommendations
-                  )
-                )
-              }
-            >
-              Export grocery list
-            </button>
-          </div>
-
-          {/* Items that aren't used for recipes, are running out/expired */}
-          {form.result.groceries.inventoryRecommendations &&
-            form.result.groceries.inventoryRecommendations.length > 0 && (
-              <div>
-                <p>While you're at the store, you may want to buy: </p>
-                {form.result.groceries.inventoryRecommendations.map(
-                  (item, index) => (
-                    <div
-                      key={index}
-                      className={`border p-3 rounded ${
-                        item.type === "expiring-replacement"
-                          ? "bg-orange-50 border-orange-200"
-                          : "bg-yellow-50 border-yellow-200"
-                      }`}
-                    >
-                      <p>{capitalize(item.name)}</p>
-                      <p>{item.reason}</p>
-                    </div>
-                  )
                 )}
+
+                {groceryType.recipes?.length > 0 && (
+                  <div>
+                    <h4>Meal Plan:</h4>
+                    {groceryType.recipes.map((meal, index) => (
+                      <div key={index}>
+                        <p>
+                          Meal {index + 1}: {meal.title}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {groceryList.shoppingList?.length > 0 ? (
+                  <div>
+                    <h4>Shopping List:</h4>
+                    <p>Items to buy: {groceryList.itemsNeeded}</p>
+                    <div>
+                      {groceryList.shoppingList.map((item, index) => (
+                        <div key={index}>
+                          <p>
+                            {capitalize(item.name)} - {item.quantity}{" "}
+                            {item.unit}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p>No items needed - you have everything!</p>
+                )}
+                {groceryList?.inventoryRecommendations?.length > 0 && (
+                  <div>
+                    <p>While you're at the store, you may want to buy: </p>
+                    {groceryList.inventoryRecommendations.map((item, index) => (
+                      <div
+                        key={index}
+                        className={`border p-3 rounded ${
+                          item.type === "expiring-replacement"
+                            ? "bg-orange-50 border-orange-200"
+                            : "bg-yellow-50 border-yellow-200"
+                        }`}
+                      >
+                        <p>{capitalize(item.name)}</p>
+                        <p>{item.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div>
+                  <button
+                    onClick={() =>
+                      handleExport(
+                        listToString(
+                          groceryList.shoppingList,
+                          groceryList.inventoryRecommendations
+                        )
+                      )
+                    }
+                  >
+                    Export grocery list
+                  </button>
+                </div>
               </div>
-            )}
+            );
+          })}
         </div>
       )}
 

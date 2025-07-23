@@ -1,380 +1,547 @@
 const baseUrl = process.env.VITE_API_BASE_URL;
 const axios = require("axios");
-const { getDaysUntilExpiration, formatDay } = require("../utils/dateUtils.js");
-const {
-  RECIPES_PATH,
-  REC_PATH,
-  COST_PATH,
-  GROCERY_LIST_PATH,
-} = require("../utils/backend_paths.js");
-const {
-  INVENTORY_CONSTANTS,
-  MEAL_CONSTANTS,
-} = require("../utils/groceryConstants.js");
+const { RECIPES_PATH, REC_PATH } = require("../utils/backend_paths.js");
 
+const {
+  analyzeInventory,
+  selectRecipesUnderBudget,
+  calculateShoppingAndExpiring,
+} = require("../utils/groceryUtils.js");
+const {
+  calculateRecipeMetrics,
+  calculateShoppingListCost,
+} = require("../utils/api.js");
+
+// Generate three optimized grocery lists, based on user budget and inventory
 const groceryRecommendation = async (userId, preferences, inventory) => {
-  const { budget, mealsNum, allowRepeats, maxRepeats } = preferences;
+  const { budget } = preferences;
+
+  try {
+    // Generate all three meal plans
+    const mealPlan = await generateMealPlans(userId, budget, inventory);
+
+    // If no meal plans could be planned
+    if (!mealPlan || Object.keys(mealPlan).length === 0) {
+      return {
+        budgetMaximized: {
+          recipes: [],
+          mealsCount: 0,
+          totalCost: 0,
+          type: "Budget Maximizer",
+        },
+        inventoryMaximizer: {
+          recipes: [],
+          mealsCount: 0,
+          totalCost: 0,
+          type: "Inventory Maximizer",
+        },
+
+        complexityMaximizer: {
+          recipes: [],
+          mealsCount: 0,
+          totalCost: 0,
+          type: "Complexity Maximizer",
+        },
+
+        message: "No meals could be planned",
+      };
+    }
+    return mealPlan;
+  } catch (err) {
+    return {
+      budgetMaximized: {
+        recipes: [],
+        mealsCount: 0,
+        totalCost: 0,
+        type: "Budget Maximizer",
+      },
+      inventoryMaximizer: {
+        recipes: [],
+        mealsCount: 0,
+        totalCost: 0,
+        type: "Inventory Maximizer",
+      },
+
+      complexityMaximizer: {
+        recipes: [],
+        mealsCount: 0,
+        totalCost: 0,
+        type: "Complexity Maximizer",
+      },
+
+      message: "Error generating grocery recommendations",
+    };
+  }
+};
+
+// Generates three grocery list types by fetching recipes from recommendation API
+// and calculating metrics (cost, inventory usage, etc.) for each recipe
+const generateMealPlans = async (userId, budget, inventory) => {
+  try {
+    // Call recipe recommendation system to get base recipes
+    const response = await axios.get(
+      `${baseUrl}${RECIPES_PATH}${REC_PATH}/${userId}`,
+      {
+        params: {
+          ingredientType: "partial",
+          maxMissing: 4,
+          priority: "balanced",
+          expirationToggle: true,
+          useCase: "grocery",
+        },
+      }
+    );
+    const recipes = response.data.recipes || [];
+
+    if (recipes.length === 0) {
+      return {
+        budgetMaximized: {
+          recipes: [],
+          mealsCount: 0,
+          totalCost: 0,
+          type: "Budget Maximizer",
+        },
+        inventoryMaximized: {
+          recipes: [],
+          mealsCount: 0,
+          totalCost: 0,
+          type: "Inventory Maximizer",
+        },
+        complexityMaximized: {
+          recipes: [],
+          mealsCount: 0,
+          totalCost: 0,
+          type: "Complexity Maximizer",
+        },
+      };
+    }
+
+    // Get cost and inventory analysis for each recipe
+    const validRecipes = recipes.filter((recipe) => {
+      const isValid = recipe && recipe.title && recipe.id;
+      if (!isValid) {
+        console.log(`Skipping invalid recipe: ${recipe}`);
+      }
+      return isValid;
+    });
+    const recipesWithMetrics = [];
+    for (let i = 0; i < validRecipes.length; i++) {
+      const recipe = validRecipes[i];
+      try {
+        const metrics = await calculateRecipeMetrics(userId, recipe, inventory);
+        recipesWithMetrics.push({ ...recipe, ...metrics });
+      } catch (err) {
+        const fallbackMetrics = {
+          ...recipe,
+          numTotalIngredients: recipe.extendedIngredients?.length || 0,
+          numMissingIngredients: recipe.missedIngredients?.length || 0,
+          cost: Math.random() * 5 + 1,
+          inventoryUsage: Math.random() * 0.8 + 0.1,
+          ownedIngredients: [],
+        };
+        recipesWithMetrics.push(fallbackMetrics);
+      }
+    }
+
+    // Generates grocery list optimized for budget usage
+    const budgetMaximized = await generateBudgetMaximized(
+      recipesWithMetrics,
+      budget,
+      inventory,
+      userId
+    );
+
+    // Generates grocery list optimized for inventory usage
+    const inventoryMaximized = await generateInventoryMaximized(
+      recipesWithMetrics,
+      budget,
+      inventory,
+      userId
+    );
+
+    // Generates grocery list optimized for recipe complexity
+    const complexityMaximized = await generateComplexityMaximized(
+      recipesWithMetrics,
+      budget,
+      inventory,
+      userId
+    );
+
+    const bestOverall = await generateBestOverall(
+      recipesWithMetrics,
+      budget,
+      inventory,
+      userId
+    );
+
+    return {
+      budgetMaximized,
+      inventoryMaximized,
+      complexityMaximized,
+      bestOverall,
+    };
+  } catch (err) {
+    return {
+      budgetMaximized: {
+        recipes: [],
+        mealsCount: 0,
+        totalCost: 0,
+        type: "Budget Maximizer",
+      },
+      inventoryMaximized: {
+        recipes: [],
+        mealsCount: 0,
+        totalCost: 0,
+        type: "Inventory Maximizer",
+      },
+      complexityMaximized: {
+        recipes: [],
+        mealsCount: 0,
+        totalCost: 0,
+        type: "Complexity Maximizer",
+      },
+    };
+  }
+};
+
+// Generates "best overall" grocery list that combines all 3 approaches
+const generateBestOverall = async (
+  recipesWithMetrics,
+  budget,
+  inventory,
+  userId
+) => {
+  // Calculate scores
+  const weights = {
+    budget: 0.5,
+    inventory: 0.35,
+    complexity: 0.15,
+  };
+
+  const maxValues = normalizeScores(recipesWithMetrics);
+  const recipesWithScores = recipesWithMetrics.map((recipe) => {
+    const scores = calculateRecipeScores(recipe, maxValues);
+    const totalScore =
+      scores.budget * weights.budget +
+      scores.inventory * weights.inventory +
+      scores.complexity * weights.complexity;
+    return {
+      ...recipe,
+      scores: {
+        ...scores,
+        total: totalScore,
+      },
+    };
+  });
+  // Sort by overall score, highest to lowest
+  const sortedRecipes = recipesWithScores.sort(
+    (a, b) => b.scores.total - a.scores.total
+  );
+  // Select recipes within budget
+  const selectedRecipes = [];
+  let totalCost = 0;
+  for (const recipe of sortedRecipes) {
+    const recipeCost = recipe.cost || 0;
+    if (totalCost + recipeCost <= budget) {
+      selectedRecipes.push(recipe);
+      totalCost += recipeCost;
+    }
+  }
+
+  const mealsCount = selectedRecipes.length;
+  const budgetUsed = (totalCost / budget) * 100;
+  const groceryList = await generateGroceryList(
+    selectedRecipes,
+    inventory,
+    userId
+  );
+
+  return {
+    type: "Best Overall",
+    recipes: selectedRecipes,
+    totalCost: Number(totalCost.toFixed(2)),
+    mealsCount: mealsCount,
+    avgCostPerMeal:
+      mealsCount > 0 ? Number((totalCost / mealsCount).toFixed(2)) : 0,
+    budgetUtilization: Number((totalCost / budget).toFixed(2)),
+    budgetUsed: Number(budgetUsed.toFixed(1)),
+    budgetRemaining: Number((budget - totalCost).toFixed(2)),
+    groceryList: groceryList,
+  };
+};
+
+// Normalize scores to 0-1 scale
+const normalizeScores = (recipes) => {
+  const costs = recipes.map((recipe) => recipe.cost || 0);
+  const missingIngredientCounts = recipes.map(
+    (recipe) => recipe.numMissingIngredients || 0
+  );
+  const ingredientCounts = recipes.map(
+    (recipe) => recipe.numTotalIngredients || 0
+  );
+
+  // Find extremes
+  const maxCost = Math.max(...costs);
+  const minCost = Math.min(...costs);
+  const maxMissing = Math.max(...missingIngredientCounts);
+  const minMissing = Math.min(...missingIngredientCounts);
+  const maxIngredients = Math.max(...ingredientCounts);
+  const minIngredients = Math.min(...ingredientCounts);
+
+  return {
+    minCost,
+    maxCost,
+    minMissing,
+    maxMissing,
+    minIngredients,
+    maxIngredients,
+  };
+};
+
+// Calculate scores for a recipe, from 0-1
+const calculateRecipeScores = (recipe, minMaxValues) => {
+  const { minCost, maxCost, minIngredients, maxIngredients } = minMaxValues;
+
+  // Budget score - cheaper recipe = higher score
+  let budgetScore = 1;
+  if (maxCost > minCost) {
+    // Reverse scaling because cheaper = higher score
+    budgetScore = 1 - (recipe.cost - minCost) / (maxCost - minCost);
+  } else {
+    budgetScore = 1;
+  }
+
+  // Complexity score - recipes with more total ingredients = higher scores
+  let complexityScore = 0;
+  if (maxIngredients > minIngredients) {
+    complexityScore =
+      (recipe.numTotalIngredients - minIngredients) /
+      (maxIngredients - minIngredients);
+  } else {
+    complexityScore = 0;
+  }
+
+  // Inventory score - already in 0-1 range bc percentage of ingredients you own
+  const inventoryScore = recipe.inventoryUsage || 0;
+  return {
+    budget: budgetScore,
+    inventory: inventoryScore,
+    complexity: complexityScore,
+  };
+};
+
+// Generates grocery list that maximizes meals for minimum cost
+// Prioritizes fewest missing ingredients, then lowest recipe cost
+const generateBudgetMaximized = async (
+  recipesWithMetrics,
+  budget,
+  inventory,
+  userId
+) => {
+  // Sort recipes to prioritize cost efficiency
+  const budgetOptimized = recipesWithMetrics.sort((a, b) => {
+    // Prioritize by lowest cost
+    if (a.cost !== b.cost) {
+      return a.cost - b.cost;
+    }
+
+    // Then by fewest missing ingredients
+    return a.numMissingIngredients - b.numMissingIngredients;
+  });
+
+  // Get as many recipes as fit in budget
+  const { validRecipes, remainingBudget } = selectRecipesUnderBudget(
+    budgetOptimized,
+    budget
+  );
+
+  // Generate grocery list with costs
+  const groceryList = await generateGroceryList(
+    validRecipes,
+    inventory,
+    userId
+  );
+
+  return {
+    type: "Budget Maximizer",
+    recipes: validRecipes,
+    totalCost: budget - remainingBudget,
+    mealsCount: validRecipes.length,
+    avgCostPerMeal:
+      validRecipes.length > 0
+        ? Number(((budget - remainingBudget) / validRecipes.length).toFixed(2))
+        : 0,
+    budgetUtilization: Number(((budget - remainingBudget) / budget).toFixed(2)),
+    groceryList,
+    budgetRemaining: remainingBudget,
+  };
+};
+
+// Generates grocery list that maximizes usage of inventory
+// Prioritizes high inventory usage, then fewest missing ingredients
+const generateInventoryMaximized = async (
+  recipesWithMetrics,
+  budget,
+  inventory,
+  userId
+) => {
+  // Sort recipes to prioritize inventory usage
+  const inventoryOptimized = recipesWithMetrics.sort((a, b) => {
+    if (a.inventoryUsage > b.inventoryUsage) {
+      // Prioritize high inventory usage
+      return b.inventoryUsage - a.inventoryUsage;
+    }
+    // Then, by fewest missing ingredients
+    return a.numMissingIngredients - b.numMissingIngredients;
+  });
+
+  // Get as many recipes as fit in budget
+  const { validRecipes, remainingBudget, usedInventory } =
+    selectRecipesUnderBudget(inventoryOptimized, budget);
+
+  // Generate grocery list with costs
+  const groceryList = await generateGroceryList(
+    validRecipes,
+    inventory,
+    userId
+  );
+  return {
+    type: "Inventory Maximizer",
+    recipes: validRecipes,
+    totalCost: budget - remainingBudget,
+    mealsCount: validRecipes.length,
+    avgCostPerMeal:
+      validRecipes.length > 0
+        ? Number(((budget - remainingBudget) / validRecipes.length).toFixed(2))
+        : 0,
+    inventoryUtilization: Number(
+      (usedInventory.size / inventory.length).toFixed(2)
+    ),
+    groceryList,
+    inventoryItemsUsed: usedInventory.size,
+    budgetRemaining: remainingBudget,
+  };
+};
+
+// Generates grocery list that maximizes complexity of recipes
+// Prioritizes highest total ingredients, then longest prep time
+const generateComplexityMaximized = async (
+  recipesWithMetrics,
+  budget,
+  inventory,
+  userId
+) => {
+  // Sort recipes to prioritize recipe complexity
+  const complexityOptimized = recipesWithMetrics.sort((a, b) => {
+    if (a.numTotalIngredients > b.numTotalIngredients) {
+      // Prioritize most total ingredients
+      return b.numTotalIngredients - a.numTotalIngredients;
+    }
+    // Then by longer prep time
+    return (b.readyInMinutes || 0) - (a.readyInMinutes || 0);
+  });
+
+  // Get as many recipes as fit in budget
+  const { validRecipes, remainingBudget } = selectRecipesUnderBudget(
+    complexityOptimized,
+    budget
+  );
+
+  // Generate grocery list with costs
+  const groceryList = await generateGroceryList(
+    validRecipes,
+    inventory,
+    userId
+  );
+
+  return {
+    type: "Complexity Maximizer",
+    recipes: validRecipes,
+    totalCost: budget - remainingBudget,
+    mealsCount: validRecipes.length,
+    avgIngredientsPerMeal: Math.ceil(
+      validRecipes.reduce((sum, r) => sum + r.numTotalIngredients, 0) /
+        validRecipes.length
+    ),
+    groceryList,
+    budgetRemaining: remainingBudget,
+  };
+};
+
+// Generate comprehensive grocery list with costs for selected recipes
+const generateGroceryList = async (recipes, inventory, userId) => {
+  if (!recipes || recipes.length === 0) {
+    return {
+      shoppingList: [],
+      inventoryRecommendations: [],
+      totalCost: 0,
+      expiringItems: [],
+      expiringCount: 0,
+      itemsNeeded: 0,
+      message: "No recipes provided",
+    };
+  }
 
   try {
     // Analyze current inventory to find expiration and stock levels of items
     const inventoryAnalysis = analyzeInventory(inventory);
 
-    // Generate meal plan based on inventory analysis and user's preferences
-    const mealPlan = await generateMealPlan(userId, {
-      totalMeals: mealsNum,
-      allowRepeats,
-      maxRepeats,
-    });
-
-    // If no meals could be planned, return meal plan
-    if (mealPlan.length === 0) {
-      return {
-        shoppingList: [],
-        inventoryRecommendations: [],
-        totalCost: 0,
-        budget: budget,
-        expiringItems: inventoryAnalysis.expiringSoon,
-        expiringCount: inventoryAnalysis.expiringSoon.length,
-        mealPlan: [],
-        itemsNeeded: 0,
-        message: "No meals could be planned",
-      };
-    }
-
-    // Generate shopping list based on meal plan and inventory
+    // Determine what needs to be purchased vs already available
     const {
       shoppingList,
       inventoryRecommendations,
       expiringItems,
       itemsToBuy,
       itemsExpiring,
-    } = calculateShoppingAndExpiring(mealPlan, inventoryAnalysis, userId);
+    } = calculateShoppingAndExpiring(recipes, inventoryAnalysis);
 
     // If no additional items need to be bought, all ingredients are available
     if (itemsToBuy === 0) {
       return {
         shoppingList: [],
-        inventoryRecommendations: [],
+        inventoryRecommendations,
         totalCost: 0,
-        budget: budget,
-        expiringItems: expiringItems,
+        expiringItems,
         expiringCount: itemsExpiring,
-        mealPlan: mealPlan,
         itemsNeeded: 0,
         message: "All ingredients already available",
       };
     }
 
     // Calculate total cost of the shopping list for recipe ingredients
-    const { shoppingList: shoppingListCosts, totalCost } =
-      await calculateShoppingListCost(shoppingList, userId);
+    let shoppingListWithCosts = [];
+    let totalCost = 0;
+    if (shoppingList.length > 0) {
+      const result = await calculateShoppingListCost(shoppingList, userId);
+      shoppingListWithCosts = result.shoppingList;
+      totalCost = result.totalCost;
+    }
 
-    // Return final shopping list with costs, and meal plan
+    // Return grocery list data
     return {
-      shoppingList: shoppingListCosts,
+      shoppingList: shoppingListWithCosts,
       inventoryRecommendations,
       totalCost,
-      budget: budget,
-      expiringItems: expiringItems,
+      expiringItems,
       expiringCount: itemsExpiring,
-      mealPlan,
       itemsNeeded: itemsToBuy,
+      message: `Found ${itemsToBuy} items to buy`,
     };
   } catch (err) {
-    console.error("Grocery recommendation error:", err);
-  }
-};
-
-const analyzeInventory = (inventory) => {
-  const expiringSoon = [],
-    runningLow = [],
-    wellStocked = [],
-    expired = [];
-  // Check stock and expiration for each inventory item
-  inventory.forEach((item) => {
-    const daysUntilExpire = getDaysUntilExpiration(item.expiration_date);
-    if (daysUntilExpire < INVENTORY_CONSTANTS.EXPIRED) {
-      expired.push(item);
-    } else if (item.quantity <= INVENTORY_CONSTANTS.LOW_STOCK) {
-      runningLow.push(item);
-    } else if (daysUntilExpire <= INVENTORY_CONSTANTS.EXPIRING_THREE_DAYS) {
-      expiringSoon.push(item);
-    } else {
-      wellStocked.push(item);
-    }
-  });
-  return { expiringSoon, runningLow, wellStocked, expired };
-};
-
-const generateMealPlan = async (userId, preferences) => {
-  const { totalMeals, allowRepeats = true, maxRepeats } = preferences;
-  // Fallback in case maxRepeats and totalMeals are undefined
-  const actualTotalMeals = totalMeals || MEAL_CONSTANTS.TOTAL_MEALS;
-  const actualMaxRepeats = maxRepeats || MEAL_CONSTANTS.MAX_REPEATS;
-
-  try {
-    // Call recipe recommendation system
-    const response = await axios.get(
-      `${baseUrl}${RECIPES_PATH}${REC_PATH}/${userId}`,
-      {
-        params: {
-          ingredientType: "partial",
-          priority: "balanced",
-          expirationToggle: true,
-        },
-      }
-    );
-    const recipes = response.data.recipes || [];
-    if (recipes.length === 0) {
-      return [];
-    }
-    const mealPlan = [];
-    if (allowRepeats) {
-      const maxPossibleMeals = recipes.length * actualMaxRepeats;
-      const actualMeals = Math.min(actualTotalMeals, maxPossibleMeals);
-      const repeatMeals = new Map();
-
-      recipes.forEach((recipe) => {
-        repeatMeals.set(recipe.id, 0);
-      });
-      // Distribute recipes evenly
-      for (let i = 0; i < actualMeals; i++) {
-        // Find recipe with fewest repeats that hasn't reached max repeats
-        let selectedRecipe = null;
-        let minRepeats = actualMaxRepeats;
-        for (const recipe of recipes) {
-          const currRepeats = repeatMeals.get(recipe.id);
-          if (currRepeats < actualMaxRepeats && currRepeats < minRepeats) {
-            minRepeats = currRepeats;
-            selectedRecipe = recipe;
-          }
-        }
-
-        // If all recipes reached max repeats, break
-        if (!selectedRecipe) {
-          break;
-        }
-        // Add selected recipe to meal plan
-        mealPlan.push({
-          ...selectedRecipe,
-          mealNumber: i + 1,
-        });
-        repeatMeals.set(selectedRecipe.id, minRepeats + 1);
-      }
-    } else {
-      const usedRecipes = new Set();
-      for (let i = 0; i < actualTotalMeals; i++) {
-        // Ensure meals don't repeat in the plan
-        const possibleRecipes = recipes.filter(
-          (recipe) => !usedRecipes.has(recipe.id)
-        );
-        if (possibleRecipes.length > 0) {
-          const randomIndex = Math.floor(
-            Math.random() * possibleRecipes.length
-          );
-          const selectedRecipe = {
-            ...possibleRecipes[randomIndex],
-            mealNumber: i + 1,
-          };
-          mealPlan.push(selectedRecipe);
-          usedRecipes.add(selectedRecipe.id);
-        } else {
-          // No more unique recipes available
-          break;
-        }
-      }
-    }
-    return mealPlan;
-  } catch (err) {
-    console.log("Error generating meal plan");
-    return [];
-  }
-};
-
-const calculateShoppingAndExpiring = (mealPlan, inventoryAnalysis, userId) => {
-  // Items to buy
-  const shoppingList = new Map();
-  // Expiring items to use in recipes
-  const expiringItems = [];
-  const inventoryRecommendations = [];
-
-  // Iterate through each recipe in mealPlan
-  mealPlan.forEach((recipe) => {
-    const ingredients =
-      recipe.extendedIngredients || recipe.missedIngredients || [];
-    // Iterate through each ingredient in the recipe
-    ingredients.forEach((ingredientData) => {
-      const ingredientId = ingredientData.id;
-
-      // Check if this ingredient is well stocked
-      const stockedIngredient = inventoryAnalysis.wellStocked.find(
-        (item) => item.name.toLowerCase() === ingredientData.name.toLowerCase()
-      );
-      // Check if we need to buy this ingredient
-      if (!stockedIngredient) {
-        if (shoppingList.has(ingredientId)) {
-          const alreadyExisting = shoppingList.get(ingredientId);
-
-          // Combine ingredient quantities for multiple recipes
-          const newQuantity = alreadyExisting.quantity + ingredientData.amount;
-          shoppingList.set(ingredientId, {
-            ...alreadyExisting,
-            quantity: newQuantity,
-            unit: ingredientData.unit,
-            // Combine recipes that use this ingredient
-            recipes: [...alreadyExisting.recipes, recipe.title],
-          });
-        } else {
-          shoppingList.set(ingredientId, {
-            id: ingredientId,
-            name: ingredientData.name,
-            quantity: ingredientData.amount,
-            unit: ingredientData.unit,
-            recipes: [recipe.title],
-            priority: "needed",
-          });
-        }
-      }
-    });
-  });
-
-  // List of ingredients already in shopping list
-  const recipeIngredientNames = Array.from(shoppingList.values()).map((item) =>
-    item.name.toLowerCase()
-  );
-  // Identify expiring items
-  inventoryAnalysis.expiringSoon.forEach((item) => {
-    const daysLeft = getDaysUntilExpiration(item.expiration_date);
-    // Check if expiring item is used in any recipes
-    const usedInRecipe = recipeIngredientNames.includes(
-      item.name.toLowerCase()
-    );
-    if (usedInRecipe) {
-      expiringItems.push({
-        name: item.name,
-        quantity: item.quantity,
-        expirationDate: item.expiration_date,
-        daysLeft: daysLeft,
-        priority: "expiring",
-        id: item.id,
-      });
-    }
-
-    // Only add to recommendations if not already in shopping list
-    if (!usedInRecipe) {
-      inventoryRecommendations.push({
-        name: item.name,
-        reason: `Expires in ${formatDay(daysLeft)}`,
-        type: "expiring-replacement",
-        item: item,
-      });
-    }
-  });
-
-  // Identify expired
-  inventoryAnalysis.expired.forEach((item) => {
-    const daysLeft = getDaysUntilExpiration(item.expiration_date);
-
-    // Only add to recommendations if not already in shopping list
-    if (!recipeIngredientNames.includes(item.name.toLowerCase())) {
-      inventoryRecommendations.push({
-        name: item.name,
-        reason: `Expired ${formatDay(daysLeft)} ago`,
-        type: "expiring-replacement",
-        item: item,
-      });
-    }
-  });
-
-  inventoryAnalysis.runningLow.forEach((item) => {
-    const daysLeft = getDaysUntilExpiration(item.expiration_date);
-    if (daysLeft > INVENTORY_CONSTANTS.MIN_RESTOCK_DAYS || 7) {
-      if (!recipeIngredientNames.includes(item.name.toLowerCase())) {
-        inventoryRecommendations.push({
-          name: item.name,
-          reason: `Only ${item.quantity} left`,
-          type: "low-stock-replacement",
-          item: item,
-        });
-      }
-    }
-  });
-
-  return {
-    shoppingList: Array.from(shoppingList.values()),
-    inventoryRecommendations: inventoryRecommendations,
-    expiringItems: expiringItems.sort((a, b) => a.daysLeft - b.daysLeft),
-    itemsToBuy: shoppingList.size,
-    itemsExpiring: expiringItems.length,
-  };
-};
-
-const calculateShoppingListCost = async (shoppingList, userId) => {
-  let totalCost = 0;
-  const shoppingListCosts = [];
-
-  // Calculate total cost for all items in shopping list
-  for (const item of shoppingList) {
-    try {
-      const costInfo = await getIngredientCost(
-        item.id,
-        item.quantity,
-        item.unit,
-        userId
-      );
-
-      totalCost += costInfo.cost;
-      shoppingListCosts.push({
-        ...item,
-        itemCost: Number(costInfo.cost.toFixed(2)),
-        costInfo: costInfo,
-      });
-    } catch (err) {
-      shoppingListCosts.push({
-        ...item,
-        itemCost: 0,
-        costInfo: null,
-      });
-    }
-  }
-
-  return { shoppingList: shoppingListCosts, totalCost: totalCost.toFixed(2) };
-};
-
-const getIngredientCost = async (
-  ingredientId,
-  quantity,
-  ingredientUnit,
-  userId
-) => {
-  // Fetch cost information for specific ingredient
-  try {
-    const response = await axios.get(
-      `${baseUrl}${GROCERY_LIST_PATH}${COST_PATH}/${userId}`,
-      {
-        params: {
-          ingredientId,
-          amount: quantity,
-          unit: ingredientUnit,
-        },
-      }
-    );
     return {
-      cost: response.data.price,
-      ingredient: response.data.name,
-      amount: response.data.amount,
-      unit: response.data.unit,
+      shoppingList: [],
+      inventoryRecommendations: [],
+      totalCost: 0,
+      expiringItems: [],
+      expiringCount: 0,
+      itemsNeeded: 0,
     };
-  } catch (err) {
-    console.log("Error getting cost for ingredient");
-    return null;
   }
 };
 
 module.exports = {
   groceryRecommendation,
-  analyzeInventory,
-  generateMealPlan,
+  generateMealPlans,
   calculateShoppingAndExpiring,
   calculateShoppingListCost,
 };

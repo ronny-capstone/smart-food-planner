@@ -68,3 +68,56 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+#deleteBtn {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='48' style='font-size:24px;'><text y='50%'>🗑️</text></svg>")
+      16 16,
+    auto;
+}
+
+#editBtn {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='48' style='font-size:24px;'><text y='50%'>✏️</text></svg>")
+      16 16,
+    auto;
+}
+
+#generateBtn {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='48' style='font-size:24px;'><text y='50%'>🔍</text></svg>")
+      16 16,
+    auto;
+}
+
+/* .progress-bar {
+  height: 24px;
+  width: 50%;
+  background-color: red;
+  color: white;
+} */
+
+#calorieBar {
+  height: 24px;
+  width: 50%;
+  background-color: red;
+  color: white;
+}
+
+#proteinBar {
+  height: 24px;
+  width: 50%;
+  background-color: red;
+  color: white;
+}
+
+#carbsBar {
+  height: 24px;
+  width: 50%;
+  background-color: red;
+  color: white;
+}
+
+#fatsBar {
+  height: 24px;
+  width: 50%;
+  background-color: red;
+  color: white;
+}
