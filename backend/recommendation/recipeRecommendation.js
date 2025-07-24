@@ -123,11 +123,11 @@ const recipeRecommendation = async (
     const expiringScore = expirationResult.score;
 
     const totalScore =
-      dietScore * dietWeight +
-      mealPrepScore * mealPrepWeight +
-      macrosScore * macrosWeight +
-      cuisineScore * cuisineWeight +
-      expiringScore * expiringWeight;
+      (dietScore * dietWeight) +
+      (mealPrepScore * mealPrepWeight) +
+      (macrosScore * macrosWeight) +
+      (cuisineScore * cuisineWeight) +
+      (expiringScore * expiringWeight);
 
     return {
       ...recipe,
