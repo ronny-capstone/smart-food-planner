@@ -201,7 +201,7 @@ export default function GroceryRecForm({ currentUser }) {
       )}
 
       <div className="mb-1 w-full max-w-sm">
-        <button type="submit" onClick={handleSubmit}>
+        <button id="generateBtn" type="submit" onClick={handleSubmit}>
           Generate Grocery List
         </button>
       </div>
