@@ -17,7 +17,7 @@ const GROCERY_LIST_PATH = "/groceryList";
 const INGREDIENTS_PATH = "/ingredients";
 const INFORMATION_PATH = "/information";
 const GENERATE_PATH = "/generate";
-const EXPORT_PATH = "/export-groceries"
+const EXPORT_PATH = "/export-groceries";
 
 module.exports = {
   SIGNUP_PATH,
@@ -39,5 +39,5 @@ module.exports = {
   INGREDIENTS_PATH,
   INFORMATION_PATH,
   GENERATE_PATH,
-  EXPORT_PATH
+  EXPORT_PATH,
 };

@@ -3,9 +3,11 @@ import { API_BASE_URL } from "../utils/api";
 import { PROFILE_PATH } from "../utils/paths";
 import { GENERATE_PATH, GROCERY_LIST_PATH, EXPORT_PATH } from "../utils/paths";
 import { listToString } from "../utils/listToString";
+import { capitalize } from "../utils/stringUtils";
 import { formatDay } from "../utils/dateUtils";
+import { toast } from "react-toastify";
 
-export default function GroceryRecForm({ currentUser, inventory }) {
+export default function GroceryRecForm({ currentUser }) {
   const [form, setForm] = useState({
     result: null,
     noResults: false,
@@ -101,7 +103,7 @@ export default function GroceryRecForm({ currentUser, inventory }) {
         URL.revokeObjectURL(url);
       })
       .catch((err) => {
-        alert("Failed to export grocery list");
+        console.log("Error exporting groceries");
       });
   };
 
@@ -129,11 +131,11 @@ export default function GroceryRecForm({ currentUser, inventory }) {
           }));
         })
         .catch((err) => {
-          alert("Failed to get grocery list recommendations");
+          toast.error("Failed to get grocery list recommendations");
           setForm((prev) => ({ ...prev, noResults: true, isSearching: false }));
         });
     } catch (err) {
-      alert("Failed to get grocery list recommendations");
+      toast.error("Failed to get grocery list recommendations");
       setForm((prev) => ({ ...prev, noResults: true, isSearching: false }));
     }
   };
@@ -237,7 +239,7 @@ export default function GroceryRecForm({ currentUser, inventory }) {
                 {form.result.groceries.shoppingList.map((item, index) => (
                   <div key={index} className="border p-2 justify-between">
                     <p>
-                      {item.name} - ${item.itemCost}
+                      {capitalize(item.name)} - ${item.itemCost}
                     </p>
                     <p>
                       Quantity: {item.quantity} {item.unit}
@@ -256,7 +258,7 @@ export default function GroceryRecForm({ currentUser, inventory }) {
               form.result.groceries.expiringItems.map((item, index) => (
                 <div key={index}>
                   <p>
-                    {item.name} :{" "}
+                    {capitalize(item.name)} :{" "}
                     {item.daysLeft === 0
                       ? "expires today"
                       : item.daysLeft > 0
@@ -297,7 +299,7 @@ export default function GroceryRecForm({ currentUser, inventory }) {
                           : "bg-yellow-50 border-yellow-200"
                       }`}
                     >
-                      <p>{item.name}</p>
+                      <p>{capitalize(item.name)}</p>
                       <p>{item.reason}</p>
                     </div>
                   )
@@ -308,8 +310,11 @@ export default function GroceryRecForm({ currentUser, inventory }) {
       )}
 
       {form.isSearching && (
-        <div>
-          <p>Generating grocery list...</p>
+        <div className="flex flex-col items-center justify-center py-6 space-y-3">
+          <p className="text-lg font-medium text-gray-700">
+            Generating grocery list...
+          </p>
+          <img src="/infinityLoading.gif" alt="Loading" className="w-32 h-32" />
         </div>
       )}
 

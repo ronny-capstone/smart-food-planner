@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
 import { RECIPES_PATH, PROFILE_PATH } from "../utils/paths";
 import { cuisinesList } from "../utils/mealFilters";
+import { capitalize } from "../utils/stringUtils";
+import { toast } from "react-toastify";
 
 export default function MealRecForm({ currentUser }) {
   const [form, setForm] = useState({
@@ -134,12 +136,12 @@ export default function MealRecForm({ currentUser }) {
             message: data.message,
             ingredientType: data.ingredientType,
           },
-          noResults: data.recipes.length === 0,
+          noResults: !data.recipes || data.recipes.length === 0,
           isSearching: false,
         }));
       })
       .catch((err) => {
-        alert("Failed to get recipe recommendations");
+        toast.error("Failed to get recipe recommendations");
         setForm((prev) => ({ ...prev, isSearching: false }));
       });
   };
@@ -341,7 +343,7 @@ export default function MealRecForm({ currentUser }) {
           </button>
         </div>
 
-        {form.recipes.length > 0 && (
+        {form.recipes && form.recipes.length > 0 && (
           <button type="button" onClick={clearResults}>
             Clear Results
           </button>
@@ -371,7 +373,8 @@ export default function MealRecForm({ currentUser }) {
               <p>Using items expiring soon:</p>
               {form.result.expiringItems.map((item) => (
                 <p key={item.name}>
-                  {item.name} - {item.numDaysExpiring} days to expiration
+                  {capitalize(item.name)} - {item.numDaysExpiring} days to
+                  expiration
                 </p>
               ))}
             </div>
@@ -379,7 +382,7 @@ export default function MealRecForm({ currentUser }) {
         </div>
       )}
 
-      {form.recipes.length > 0 && !form.isSearching && (
+      {form.recipes && form.recipes.length > 0 && !form.isSearching && (
         <div>
           <h2> Recipe Recommendations ({form.recipes.length}) </h2>
           {form.recipes.map((recipe) => (
@@ -406,20 +409,35 @@ export default function MealRecForm({ currentUser }) {
                 )}
               </p>
 
-              {recipe.usedExpiringIngredients && (
-                <>
-                  <p>Uses {recipe.usedExpiringIngredients} expiring items</p>
-                  <ul>
-                    {recipe.usedExpiringIngredients.map((item, index) => (
-                      <li key={index}>
-                        {item.name} - expires in {item.daysUntilExpire} days
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
+              {recipe.usedExpiringIngredients &&
+                form.prioritizeExpiring &&
+                recipe.usedExpiringIngredients.length > 0 && (
+                  <>
+                    <p>
+                      Uses {recipe.usedExpiringIngredients.length} expiring
+                      items:
+                    </p>
+                    <ul>
+                      {recipe.usedExpiringIngredients.map((item, index) => (
+                        <li key={index}>
+                          {capitalize(item.name)} - expires in{" "}
+                          {item.daysUntilExpire} days
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
             </div>
           ))}
+        </div>
+      )}
+
+      {form.isSearching && (
+        <div className="flex flex-col items-center justify-center py-6 space-y-3">
+          <p className="text-lg font-medium text-gray-700">
+            Generating Meal Recommendation...
+          </p>
+          <img src="/infinityLoading.gif" alt="Loading" className="w-32 h-32" />
         </div>
       )}
 

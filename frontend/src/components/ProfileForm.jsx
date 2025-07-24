@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
-import { PROFILE_PATH, AUTH_PATH } from "../utils/paths";
+import { PROFILE_PATH } from "../utils/paths";
 import { checkInvalidVariable } from "../utils/invalidVars";
+import { toast } from "react-toastify";
 
 export default function ProfileForm({ profileSubmit, currentUser }) {
   // Determines if user is updating an existing profile or creating new one
@@ -61,7 +62,7 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
     // Stops page from refreshing
     e.preventDefault();
     if (!currentUser) {
-      alert("Please log in");
+      toast.error("Please log in");
       return;
     }
     if (
@@ -74,7 +75,7 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
       checkInvalidVariable(healthGoal) ||
       checkInvalidVariable(dietaryPreferences)
     ) {
-      alert("Please fill out all fields");
+      toast.error("Please fill out all fields");
       return;
     }
 
@@ -111,17 +112,17 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           setActivityLevel("");
           setHealthGoal("");
           setDietaryPreferences("");
-          alert(`Profile ${isUpdating ? "updated" : "created"} successfully`);
+          toast.success(`Profile ${isUpdating ? "updated" : "created"} successfully`);
 
           if (profileSubmit) {
             profileSubmit();
           }
         })
         .catch((err) => {
-          alert(`Failed to ${isUpdating ? "update" : "create"} profile`);
+          toast.error(`Failed to ${isUpdating ? "update" : "create"} profile`);
         });
     } catch (err) {
-      alert(`Failed to ${isUpdating ? "update" : "create"} profile`);
+      toast.error(`Failed to ${isUpdating ? "update" : "create"} profile`);
     }
   };
 
