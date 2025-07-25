@@ -3,7 +3,7 @@ import { API_BASE_URL } from "../utils/api";
 import { PROFILE_PATH } from "../utils/paths";
 import { GENERATE_PATH, GROCERY_LIST_PATH, EXPORT_PATH } from "../utils/paths";
 import { listToString } from "../utils/listToString";
-import { capitalize } from "../utils/stringUtils";
+import { capitalize, formatServings } from "../utils/stringUtils";
 import { toast } from "react-toastify";
 
 export default function GroceryRecForm({ currentUser }) {
@@ -209,7 +209,6 @@ export default function GroceryRecForm({ currentUser }) {
               return null;
             }
             const groceryList = groceryType.groceryList || {};
-            const expiringItems = groceryList.expiringItems || [];
 
             const types = {
               bestOverall: {
@@ -250,10 +249,10 @@ export default function GroceryRecForm({ currentUser }) {
                     <p>Total meals: {groceryType.mealsCount} </p>
                   </div>
                   <div className="text-center">
-                    {groceryType.inventoryUtilization !== undefined && (
+                    {groceryType.avgRecipeInventoryUsage !== undefined && (
                       <p>
-                        Inventory Usage:{" "}
-                        {Math.round(groceryType.inventoryUtilization * 100)}%
+                        Avg. Ingredient Coverage:{" "}
+                        {Math.round(groceryType.avgRecipeInventoryUsage * 100)}%
                       </p>
                     )}
                   </div>
@@ -261,7 +260,7 @@ export default function GroceryRecForm({ currentUser }) {
 
                 {groceryType.recipes?.length > 0 && (
                   <div>
-                    <h4>Meal Plan:</h4>
+                    <h4 className="text-lg mb-1">Meal Plan:</h4>
                     {groceryType.recipes.map((meal, index) => (
                       <div key={index}>
                         <p>
@@ -277,16 +276,17 @@ export default function GroceryRecForm({ currentUser }) {
 
                 {groceryList.shoppingList?.length > 0 ? (
                   <div>
-                    <h4>Shopping List:</h4>
-                    <p>Items to buy: {groceryList.itemsNeeded}</p>
+                    <h4 className="text-lg mt-1 mb-1">Shopping List:</h4>
+                    <p className="font-semibold">
+                      Items to buy ({groceryList.itemsNeeded}){" "}
+                    </p>
                     <div>
                       {groceryList.shoppingList
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .map((item, index) => (
                           <div key={index}>
                             <p>
-                              {capitalize(item.name)} - {item.quantity}{" "}
-                              {item.unit}
+                              {capitalize(item.name)} - {formatServings(item.servingsNeeded)}
                             </p>
                           </div>
                         ))}
@@ -297,7 +297,9 @@ export default function GroceryRecForm({ currentUser }) {
                 )}
                 {groceryList?.inventoryRecommendations?.length > 0 && (
                   <div>
-                    <p>While you're at the store, you may want to buy: </p>
+                    <p className="text-lg mt-2 mb-2">
+                      While you're at the store, you may want to buy:{" "}
+                    </p>
                     {groceryList.inventoryRecommendations.map((item, index) => (
                       <div
                         key={index}

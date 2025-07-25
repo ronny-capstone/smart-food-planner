@@ -1,6 +1,34 @@
-const { isNameMatch } = require("./stringUtils");
+const { isNameMatch, isNameMatchNames } = require("./stringUtils");
 const { INVENTORY_CONSTANTS } = require("./groceryConstants");
 const { getDaysUntilExpiration, formatDay } = require("./dateUtils.js");
+
+// Normalize scores to 0-1 scale
+const normalizeScores = (recipes) => {
+  const costs = recipes.map((recipe) => recipe.cost || 0);
+  const missingIngredientCounts = recipes.map(
+    (recipe) => recipe.numMissingIngredients || 0
+  );
+  const ingredientCounts = recipes.map(
+    (recipe) => recipe.numTotalIngredients || 0
+  );
+
+  // Find extremes
+  const maxCost = Math.max(...costs);
+  const minCost = Math.min(...costs);
+  const maxMissing = Math.max(...missingIngredientCounts);
+  const minMissing = Math.min(...missingIngredientCounts);
+  const maxIngredients = Math.max(...ingredientCounts);
+  const minIngredients = Math.min(...ingredientCounts);
+
+  return {
+    minCost,
+    maxCost,
+    minMissing,
+    maxMissing,
+    minIngredients,
+    maxIngredients,
+  };
+};
 
 // Categorize inventory items by expiration/stock status
 const analyzeInventory = (inventory) => {
@@ -30,13 +58,17 @@ const getOwnedIngredients = (recipe, inventory) => {
     recipe.extendedIngredients || recipe.usedIngredients || [];
   const ownedIngredients = [];
   recipeIngredients.forEach((ingredient) => {
-    const matchingIngredient = inventory.find((item) =>
-      isNameMatch(item, ingredient)
-    );
+    // If inventory quantity >= 1, we can use it
+    const matchingIngredient = inventory.find((item) => {
+      return isNameMatch(ingredient, item) && item.quantity >= 1;
+    });
     if (matchingIngredient) {
       ownedIngredients.push({
         ...ingredient,
         inventoryItem: matchingIngredient,
+        servingsAvailable: matchingIngredient.quantity,
+        // Always 1 serving per ingredient
+        servingsNeeded: 1,
       });
     }
   });
@@ -62,6 +94,43 @@ const selectRecipesUnderBudget = (sortedRecipes, budget) => {
   return { validRecipes, remainingBudget, usedInventory };
 };
 
+const createInventoryMap = (inventoryItems) => {
+  const inventoryMap = new Map();
+  inventoryItems.forEach((item) => {
+    const key = item.name.toLowerCase();
+
+    // If multiple items with same name, combine quantities
+    if (inventoryMap.has(key)) {
+      const existingItem = inventoryMap.get(key);
+      inventoryMap.set(key, {
+        ...existingItem,
+        quantity: existingItem.quantity + item.quantity,
+      });
+    } else {
+      // Create copy
+      inventoryMap.set(key, { ...item });
+    }
+  });
+  return inventoryMap;
+};
+
+const findIngredientInMap = (inventoryMap, ingredientName) => {
+  const name = ingredientName.toLowerCase();
+
+  // Try to find exact match
+  if (inventoryMap.has(name)) {
+    return { key: name, item: inventoryMap.get(name) };
+  }
+
+  // Check match with plurals
+  for (const [key, item] of inventoryMap.entries()) {
+    if (isNameMatchNames(item.name, ingredientName)) {
+      return { key, item };
+    }
+  }
+  return null;
+};
+
 // Calculate shopping list and inventory recommendations
 // Determines what ingredients need to be purchased, which expiring items are
 // being used in recipes, recommendations expired/low-stock items
@@ -72,42 +141,61 @@ const calculateShoppingAndExpiring = (recipes, inventoryAnalysis) => {
   const expiringItems = [];
   const inventoryRecommendations = [];
 
+  const inventoryMap = createInventoryMap([
+    ...inventoryAnalysis.wellStocked,
+    ...inventoryAnalysis.expiringSoon,
+    ...inventoryAnalysis.runningLow,
+  ]);
+
   // Iterate through each recipe in mealPlan
   recipes.forEach((recipe) => {
     const ingredients =
       recipe.extendedIngredients || recipe.missedIngredients || [];
     // Iterate through each ingredient in the recipe
     ingredients.forEach((ingredientData) => {
-      const ingredientId = ingredientData.id;
+      try {
+        const ingredientId = ingredientData.id;
+        const ingredientName = ingredientData.name;
 
-      // Check if this ingredient is well stocked
-      const stockedIngredient = inventoryAnalysis.wellStocked.find(
-        (item) => item.name.toLowerCase() === ingredientData.name.toLowerCase()
-      );
-      // Check if we need to buy this ingredient
-      if (!stockedIngredient) {
-        if (shoppingList.has(ingredientId)) {
-          const alreadyExisting = shoppingList.get(ingredientId);
-
-          // Combine ingredient quantities for multiple recipes
-          const newQuantity = alreadyExisting.quantity + ingredientData.amount;
-          shoppingList.set(ingredientId, {
-            ...alreadyExisting,
-            quantity: newQuantity,
-            unit: ingredientData.unit,
-            // Combine recipes that use this ingredient
-            recipes: [...alreadyExisting.recipes, recipe.title],
-          });
+        // Check if we have >= 1 serving of ingredient in current inventory
+        const foundIngredient = findIngredientInMap(
+          inventoryMap,
+          ingredientName
+        );
+        if (foundIngredient && foundIngredient.item.quantity >= 1) {
+          // Use from inventory (subtract 1 serving)
+          foundIngredient.item.quantity -= 1;
+          // Remove from inventory if used up
+          if (foundIngredient.item.quantity <= 0) {
+            inventoryMap.delete(foundIngredient.key);
+          }
         } else {
-          shoppingList.set(ingredientId, {
-            id: ingredientId,
-            name: ingredientData.name,
-            quantity: ingredientData.amount,
-            unit: ingredientData.unit,
-            recipes: [recipe.title],
-            priority: "needed",
-          });
+          // Need to buy this ingredient
+          if (shoppingList.has(ingredientId)) {
+            const alreadyExisting = shoppingList.get(ingredientId);
+
+            // Combine ingredient quantities for multiple recipes
+            shoppingList.set(ingredientId, {
+              ...alreadyExisting,
+              quantity: alreadyExisting.quantity + ingredientData.amount,
+              servingsNeeded: alreadyExisting.servingsNeeded + 1,
+              // Combine recipes that use this ingredient
+              recipes: alreadyExisting.recipes.includes(recipe.title)
+                ? alreadyExisting.recipes
+                : [...alreadyExisting.recipes, recipe.title],
+            });
+          } else {
+            shoppingList.set(ingredientId, {
+              id: ingredientId,
+              name: ingredientData.name,
+              quantity: ingredientData.amount,
+              servingsNeeded: 1,
+              recipes: [recipe.title],
+            });
+          }
         }
+      } catch (error) {
+        console.log(`Error processing ingredient ${ingredientData.name}:`);
       }
     });
   });
@@ -182,11 +270,36 @@ const calculateShoppingAndExpiring = (recipes, inventoryAnalysis) => {
     }
   });
 
+  let shoppingArray = Array.from(shoppingList.values());
+  // Combine items with identical names
+  const nameMap = new Map();
+  shoppingArray.forEach((item) => {
+    const itemName = item.name.toLowerCase();
+    if (nameMap.has(itemName)) {
+      // Combine with existing item
+      const existing = nameMap.get(itemName);
+      nameMap.set(itemName, {
+        ...existing,
+        quantity: existing.quantity + item.quantity,
+        servingsNeeded: existing.servingsNeeded + item.servingsNeeded,
+      });
+    } else {
+      // First occurrence of this name
+      nameMap.set(itemName, {
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        servingsNeeded: item.servingsNeeded,
+      });
+    }
+  });
+  const uniqueShoppingList = Array.from(nameMap.values());
+
   return {
-    shoppingList: Array.from(shoppingList.values()),
+    shoppingList: uniqueShoppingList,
     inventoryRecommendations: inventoryRecommendations,
     expiringItems: expiringItems.sort((a, b) => a.daysLeft - b.daysLeft),
-    itemsToBuy: shoppingList.size,
+    itemsToBuy: uniqueShoppingList.length,
     itemsExpiring: expiringItems.length,
   };
 };
@@ -196,4 +309,5 @@ module.exports = {
   getOwnedIngredients,
   selectRecipesUnderBudget,
   calculateShoppingAndExpiring,
+  normalizeScores,
 };

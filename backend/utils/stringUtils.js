@@ -18,4 +18,21 @@ const isNameMatch = (ingredient, inventoryItem) => {
   return false;
 };
 
-module.exports = { isNameMatch };
+const isNameMatchNames = (ingredientName, inventoryName) => {
+  // Exact match
+  if (ingredientName === inventoryName) {
+    return true;
+  }
+
+  // Check for plurals
+  if (
+    ingredientName + "s" === inventoryName ||
+    inventoryName + "s" === ingredientName
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+module.exports = { isNameMatch, isNameMatchNames };
