@@ -389,7 +389,7 @@ export default function MealRecForm({ currentUser }) {
           <h2> Recipe Recommendations ({form.recipes.length}) </h2>
           {form.recipes.map((recipe) => (
             <div key={recipe.id}>
-              <img src={recipe.image} alt={recipe.title} />
+              <img src={recipe.image} alt={recipe.title} className="mx-auto my-4 rounded-md max-w-sm"/>
               <p> {recipe.title} </p>
               <p>Match Score: {recipe.totalScore}% match</p>
               <p>Prep time: {recipe.readyInMinutes} minutes</p>

@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
 import { PROFILE_PATH } from "../utils/paths";
-import { GENERATE_PATH, GROCERY_LIST_PATH, EXPORT_PATH } from "../utils/paths";
+import {
+  GENERATE_PATH,
+  GROCERY_LIST_PATH,
+  GROCERY_PATH,
+  EXPORT_PATH,
+} from "../utils/paths";
 import { listToString } from "../utils/listToString";
-import { capitalize } from "../utils/stringUtils";
-import { formatDay } from "../utils/dateUtils";
+import { capitalize, isNameMatch } from "../utils/stringUtils";
 import { toast } from "react-toastify";
 
 export default function GroceryRecForm({ currentUser }) {
@@ -15,6 +19,7 @@ export default function GroceryRecForm({ currentUser }) {
     diet: "",
     budget: 20,
     useDiet: true,
+    isAddingToList: false,
   });
 
   // Fetch user's diet from profile
@@ -103,6 +108,88 @@ export default function GroceryRecForm({ currentUser }) {
       });
   };
 
+  // Add generated grocery list items to user's grocery list with duplicate checking
+  const handleAddToGroceryList = async (shoppingList) => {
+    if (!shoppingList || shoppingList.length === 0) {
+      toast.info("No items to add to grocery list");
+      return;
+    }
+    setForm((prev) => ({ ...prev, isAddingToList: true }));
+
+    try {
+      // Fetch existing grocery list items
+      const response = await fetch(
+        `${API_BASE_URL}${GROCERY_PATH}?user_id=${currentUser}`
+      );
+      const existingItems = await response.json();
+      console.log("Shopping list: ", shoppingList);
+      console.log("Existing items: ", existingItems);
+      let processedCount = 0;
+      let successCount = 0;
+
+      shoppingList.forEach(async (item) => {
+        try {
+          if (!item || !item.name) {
+            console.log("Skipping  item with missing name:", item);
+            processedCount++;
+            return;
+          }
+
+          let existingItem = null;
+          if (item.id) {
+            existingItem = existingItems.find(
+              (existing) => existing.id === item.id
+            );
+          }
+
+          if (existingItem) {
+            // If item exists, combine quantities
+            await fetch(`${API_BASE_URL}${GROCERY_PATH}/${existingItem.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                quantity: existingItem.quantity + item.quantity,
+              }),
+            });
+            successCount++;
+          } else {
+            // If item does not exist, create new
+            await fetch(`${API_BASE_URL}${GROCERY_PATH}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                user_id: currentUser,
+                item_id: item.id || 0,
+                name: item.name,
+                quantity: item.quantity,
+              }),
+            });
+            successCount++;
+          }
+        } catch (err) {
+          console.log(`Error processing ${item.name}`, err);
+        }
+
+        processedCount++;
+        if (processedCount === shoppingList.length) {
+          if (successCount > 0) {
+            toast.success(
+              `Successfully added ${successCount} items to your grocery list!`
+            );
+          } else {
+            toast.error(
+              `Failed to add items to grocery list. Please try again.`
+            );
+          }
+          setForm((prev) => ({ ...prev, isAddingToList: false }));
+        }
+      });
+    } catch (err) {
+      toast.error("Failed to process grocery list items");
+      setForm((prev) => ({ ...prev, isAddingToList: false }));
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setForm((prev) => ({ ...prev, isSearching: true, noResults: false }));
@@ -184,7 +271,6 @@ export default function GroceryRecForm({ currentUser }) {
               return null;
             }
             const groceryList = groceryType.groceryList || {};
-            const expiringItems = groceryList.expiringItems || [];
 
             const types = {
               bestOverall: {
@@ -287,24 +373,50 @@ export default function GroceryRecForm({ currentUser }) {
                     Export grocery list
                   </button>
                 </div>
+
+                {groceryList.shoppingList?.length > 0 && (
+                  <button
+                    onClick={() =>
+                      handleAddToGroceryList(groceryList.shoppingList)
+                    }
+                  >
+                    Add to grocery list
+                  </button>
+                )}
               </div>
             );
           })}
-        </div>
-      )}
 
-      {form.isSearching && (
-        <div className="flex flex-col items-center justify-center py-6 space-y-3">
-          <p className="text-lg font-medium text-gray-700">
-            Generating grocery list...
-          </p>
-          <img src="/infinityLoading.gif" alt="Loading" className="w-32 h-32" />
-        </div>
-      )}
+          {/* {form.isAddingToList && (
+            <div className="flex flex-col items-center justify-center py-6 space-y-3">
+              <p className="text-lg font-medium text-gray-700">
+                Adding items to grocery list...
+              </p>
+              <img
+                src="/infinityLoading.gif"
+                alt="Loading"
+                className="w-32 h-32"
+              />
+            </div>
+          )} */}
+          {form.isSearching && (
+            <div className="flex flex-col items-center justify-center py-6 space-y-3">
+              <p className="text-lg font-medium text-gray-700">
+                Generating grocery list...
+              </p>
+              <img
+                src="/infinityLoading.gif"
+                alt="Loading"
+                className="w-32 h-32"
+              />
+            </div>
+          )}
 
-      {form.noResults && !form.isSearching && (
-        <div>
-          <p> Grocery list could not be generated. </p>
+          {form.noResults && !form.isSearching && (
+            <div>
+              <p> Grocery list could not be generated. </p>
+            </div>
+          )}
         </div>
       )}
     </div>
