@@ -40,9 +40,12 @@ export default function InventoryCard({ item, handleEdit, handleDelete }) {
       <p className={getStatusColor(expirationStatus)}> {getStatusMessage()} </p>
       <p>Expires: {formatDateString(item.expiration_date)}</p>
       <p>Servings: {item.quantity}</p>
-
-      <button onClick={() => handleEdit(item)}>Edit</button>
-      <button onClick={() => handleDelete(item)}>Remove</button>
+      <button id="editBtn" onClick={() => handleEdit(item)}>
+        Edit
+      </button>
+      <button id="deleteBtn" onClick={() => handleDelete(item)}>
+        Remove
+      </button>
     </div>
   );
 }

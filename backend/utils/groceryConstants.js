@@ -29,10 +29,18 @@ const FALLBACK_METRICS = {
   INVENTORY_USAGE: 0.5,
 };
 
+const MEAL_PLAN_TYPES = {
+  BUDGET_MAXIMIZER: "Budget Maximizer",
+  INVENTORY_MAXIMIZER: "Inventory Maximizer",
+  COMPLEXITY_MAXIMIZER: "Complexity Maximizer",
+  BEST_OVERALL: "Best Overall",
+};
+
 module.exports = {
   INVENTORY_CONSTANTS,
   MEAL_CONSTANTS,
   GENERATE_CONSTANTS,
   ALGORITHM_WEIGHTS,
   FALLBACK_METRICS,
+  MEAL_PLAN_TYPES,
 };

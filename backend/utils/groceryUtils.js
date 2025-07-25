@@ -153,49 +153,42 @@ const calculateShoppingAndExpiring = (recipes, inventoryAnalysis) => {
       recipe.extendedIngredients || recipe.missedIngredients || [];
     // Iterate through each ingredient in the recipe
     ingredients.forEach((ingredientData) => {
-      try {
-        const ingredientId = ingredientData.id;
-        const ingredientName = ingredientData.name;
+      const ingredientId = ingredientData.id;
+      const ingredientName = ingredientData.name;
 
-        // Check if we have >= 1 serving of ingredient in current inventory
-        const foundIngredient = findIngredientInMap(
-          inventoryMap,
-          ingredientName
-        );
-        if (foundIngredient && foundIngredient.item.quantity >= 1) {
-          // Use from inventory (subtract 1 serving)
-          foundIngredient.item.quantity -= 1;
-          // Remove from inventory if used up
-          if (foundIngredient.item.quantity <= 0) {
-            inventoryMap.delete(foundIngredient.key);
-          }
-        } else {
-          // Need to buy this ingredient
-          if (shoppingList.has(ingredientId)) {
-            const alreadyExisting = shoppingList.get(ingredientId);
-
-            // Combine ingredient quantities for multiple recipes
-            shoppingList.set(ingredientId, {
-              ...alreadyExisting,
-              quantity: alreadyExisting.quantity + ingredientData.amount,
-              servingsNeeded: alreadyExisting.servingsNeeded + 1,
-              // Combine recipes that use this ingredient
-              recipes: alreadyExisting.recipes.includes(recipe.title)
-                ? alreadyExisting.recipes
-                : [...alreadyExisting.recipes, recipe.title],
-            });
-          } else {
-            shoppingList.set(ingredientId, {
-              id: ingredientId,
-              name: ingredientData.name,
-              quantity: ingredientData.amount,
-              servingsNeeded: 1,
-              recipes: [recipe.title],
-            });
-          }
+      // Check if we have >= 1 serving of ingredient in current inventory
+      const foundIngredient = findIngredientInMap(inventoryMap, ingredientName);
+      if (foundIngredient && foundIngredient.item.quantity >= 1) {
+        // Use from inventory (subtract 1 serving)
+        foundIngredient.item.quantity -= 1;
+        // Remove from inventory if used up
+        if (foundIngredient.item.quantity <= 0) {
+          inventoryMap.delete(foundIngredient.key);
         }
-      } catch (error) {
-        console.log(`Error processing ingredient ${ingredientData.name}:`);
+      } else {
+        // Need to buy this ingredient
+        if (shoppingList.has(ingredientId)) {
+          const alreadyExisting = shoppingList.get(ingredientId);
+
+          // Combine ingredient quantities for multiple recipes
+          shoppingList.set(ingredientId, {
+            ...alreadyExisting,
+            quantity: alreadyExisting.quantity + ingredientData.amount,
+            servingsNeeded: alreadyExisting.servingsNeeded + 1,
+            // Combine recipes that use this ingredient
+            recipes: alreadyExisting.recipes.includes(recipe.title)
+              ? alreadyExisting.recipes
+              : [...alreadyExisting.recipes, recipe.title],
+          });
+        } else {
+          shoppingList.set(ingredientId, {
+            id: ingredientId,
+            name: ingredientData.name,
+            quantity: ingredientData.amount,
+            servingsNeeded: 1,
+            recipes: [recipe.title],
+          });
+        }
       }
     });
   });

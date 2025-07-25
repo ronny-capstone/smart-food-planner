@@ -5,6 +5,7 @@ import { GENERATE_PATH, GROCERY_LIST_PATH, EXPORT_PATH } from "../utils/paths";
 import { listToString } from "../utils/listToString";
 import { capitalize, formatServings } from "../utils/stringUtils";
 import { toast } from "react-toastify";
+import { types } from "../utils/groceryConstants";
 
 export default function GroceryRecForm({ currentUser }) {
   const [form, setForm] = useState({
@@ -190,7 +191,8 @@ export default function GroceryRecForm({ currentUser }) {
       )}
 
       <div className="mb-1 w-full max-w-sm">
-        <button type="submit" onClick={handleSubmit}>
+        <button id="generateBtn" type="submit" onClick={handleSubmit}>
+          {" "}
           Generate Grocery List
         </button>
       </div>
@@ -209,25 +211,6 @@ export default function GroceryRecForm({ currentUser }) {
               return null;
             }
             const groceryList = groceryType.groceryList || {};
-
-            const types = {
-              bestOverall: {
-                title: "🏆 Best Overall 🏆",
-                text: "Optimal balance of cost and convenience!",
-              },
-              budgetMaximizer: {
-                title: "Budget Maximizer",
-                text: "💰 Maximize your budget!",
-              },
-              inventoryMaximizer: {
-                title: "Inventory Maximizer",
-                text: "🍎 Use up your inventory!",
-              },
-              complexityMaximizer: {
-                title: "Complexity Maximizer",
-                text: "👩‍🍳 Make rich & complex recipes!",
-              },
-            };
 
             return (
               <div key={type} className="mb-8 p-4 border rounded">
@@ -286,7 +269,8 @@ export default function GroceryRecForm({ currentUser }) {
                         .map((item, index) => (
                           <div key={index}>
                             <p>
-                              {capitalize(item.name)} - {formatServings(item.servingsNeeded)}
+                              {capitalize(item.name)} -{" "}
+                              {formatServings(item.servingsNeeded)}
                             </p>
                           </div>
                         ))}
