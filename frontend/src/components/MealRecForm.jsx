@@ -113,7 +113,6 @@ export default function MealRecForm({ currentUser }) {
       expirationToggle: form.prioritizeExpiring,
       priority: form.selectedPriority,
       useDiet: form.useDiet,
-      useCase: "recipe"
     };
 
     Object.entries(queryParams).forEach(([key, value]) => {
