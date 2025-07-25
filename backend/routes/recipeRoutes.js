@@ -375,6 +375,8 @@ recipeRoutes.get(`${EXPIRING_PATH}/:userId`, (req, res) => {
 // Get recipes with recommendations
 recipeRoutes.get(`${REC_PATH}/:userId`, (req, res) => {
   const { userId } = req.params;
+  const { useCase } = req.query;
+
   const {
     ingredientType = "exact",
     expirationToggle = "false",
@@ -449,7 +451,8 @@ recipeRoutes.get(`${REC_PATH}/:userId`, (req, res) => {
               ingredientType,
               userFilters,
               profile,
-              inventory
+              inventory,
+              useCase
             );
 
             return res.json({ success: true, ...recommendations, userId });
@@ -501,7 +504,6 @@ const findDetailedRecipes = async (recipes) => {
       };
     });
   } catch (err) {
-    console.log("Error fetching detailed recipes");
     return limitedRecipes.map((recipe) => ({
       ...recipe,
       readyInMinutes: null,
