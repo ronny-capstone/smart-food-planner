@@ -3,9 +3,9 @@ import { API_BASE_URL } from "../utils/api";
 import { PROFILE_PATH } from "../utils/paths";
 import { GENERATE_PATH, GROCERY_LIST_PATH, EXPORT_PATH } from "../utils/paths";
 import { listToString } from "../utils/listToString";
-import { capitalize } from "../utils/stringUtils";
-import { formatDay } from "../utils/dateUtils";
+import { capitalize, formatServings } from "../utils/stringUtils";
 import { toast } from "react-toastify";
+import { types } from "../utils/groceryConstants";
 
 export default function GroceryRecForm({ currentUser }) {
   const [form, setForm] = useState({
@@ -15,6 +15,8 @@ export default function GroceryRecForm({ currentUser }) {
     diet: "",
     budget: 20,
     useDiet: true,
+    allowRepeats: false,
+    maxRepeats: 1,
   });
 
   // Fetch user's diet from profile
@@ -59,6 +61,8 @@ export default function GroceryRecForm({ currentUser }) {
       budget: 20,
       useDiet: true,
       result: null,
+      allowRepeats: false,
+      maxRepeats: 1,
     }));
   };
 
@@ -108,6 +112,8 @@ export default function GroceryRecForm({ currentUser }) {
     setForm((prev) => ({ ...prev, isSearching: true, noResults: false }));
     const params = new URLSearchParams({
       budget: form.budget,
+      allowRepeats: form.allowRepeats,
+      maxRepeats: form.maxRepeats,
     });
 
     try {
@@ -151,6 +157,26 @@ export default function GroceryRecForm({ currentUser }) {
           required
         ></input>
       </div>
+      <div>
+        <input
+          type="checkbox"
+          name="allowRepeats"
+          checked={form.allowRepeats}
+          onChange={handleChange}
+        />
+        <label>Allow repeat meals</label>
+      </div>
+      <div>
+        <label>Max number of repeated meals:</label>
+        <input
+          type="number"
+          name="maxRepeats"
+          value={form.maxRepeats}
+          onChange={handleChange}
+          min="1"
+          max="10"
+        ></input>
+      </div>
 
       <div className="mb-1 w-full max-w-sm">
         <button type="button" onClick={clearForm}>
@@ -184,52 +210,45 @@ export default function GroceryRecForm({ currentUser }) {
               return null;
             }
             const groceryList = groceryType.groceryList || {};
-            const expiringItems = groceryList.expiringItems || [];
-
-            const types = {
-              bestOverall: {
-                title: "Best Overall",
-                text: "Optimal balance of cost and convenience!",
-              },
-              budgetMaximizer: {
-                title: "Budget Maximizer",
-                text: "Maximize your budget!",
-              },
-              inventoryMaximizer: {
-                title: "Inventory Maximizer",
-                text: "Use up your inventory!",
-              },
-              complexityMaximizer: {
-                title: "Complexity Maximizer",
-                text: "Make rich & complex recipes!",
-              },
-            };
-
             return (
               <div key={type} className="mb-8 p-4 border rounded">
-                <h3>{types[type].title}</h3>
-                <p>{types[type].text}</p>
-                <p>
-                  Total cost: ${Number(groceryType.totalCost).toFixed(2)} out of
-                  ${form.budget} budget
-                </p>
-                <p>Budget Used: {groceryType.budgetUsed}%</p>
-                <p>Meals planned: {groceryType.mealsCount}</p>
-
-                {groceryType.inventoryUtilization !== undefined && (
-                  <p>
-                    Inventory Usage:{" "}
-                    {Math.round(groceryType.inventoryUtilization * 100)}%
-                  </p>
-                )}
+                <h3 className="text-xl font-semibold text-gray-800 mb-1">
+                  {types[type].title}
+                </h3>
+                <p className="text-gray-600 mb-2">{types[type].text}</p>
+                <div className="grid grid-cols-2 gap-3 mb-3 p-4 bg-gray-50 rounded-lg">
+                  <div className="text-center">
+                    <p>
+                      Total cost: ${Number(groceryType.totalCost).toFixed(2)}{" "}
+                      out of ${form.budget} budget
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p>Budget Used: {groceryType.budgetUsed}%</p>
+                  </div>
+                  <div className="text-center">
+                    <p>Total meals: {groceryType.mealsCount} </p>
+                  </div>
+                  <div className="text-center">
+                    {groceryType.avgRecipeInventoryUsage !== undefined && (
+                      <p>
+                        Avg. Ingredient Coverage:{" "}
+                        {Math.round(groceryType.avgRecipeInventoryUsage * 100)}%
+                      </p>
+                    )}
+                  </div>
+                </div>
 
                 {groceryType.recipes?.length > 0 && (
                   <div>
-                    <h4>Meal Plan:</h4>
+                    <h4 className="text-lg mb-1">Meal Plan:</h4>
                     {groceryType.recipes.map((meal, index) => (
                       <div key={index}>
                         <p>
                           Meal {index + 1}: {meal.title}
+                          {meal.repeatNumber && meal.repeatNumber > 1 && (
+                            <span> (#{meal.repeatNumber})</span>
+                          )}
                         </p>
                       </div>
                     ))}
@@ -238,17 +257,21 @@ export default function GroceryRecForm({ currentUser }) {
 
                 {groceryList.shoppingList?.length > 0 ? (
                   <div>
-                    <h4>Shopping List:</h4>
-                    <p>Items to buy: {groceryList.itemsNeeded}</p>
+                    <h4 className="text-lg mt-1 mb-1">Shopping List:</h4>
+                    <p className="font-semibold">
+                      Items to buy ({groceryList.itemsNeeded}){" "}
+                    </p>
                     <div>
-                      {groceryList.shoppingList.map((item, index) => (
-                        <div key={index}>
-                          <p>
-                            {capitalize(item.name)} - {item.quantity}{" "}
-                            {item.unit}
-                          </p>
-                        </div>
-                      ))}
+                      {groceryList.shoppingList
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((item, index) => (
+                          <div key={index}>
+                            <p>
+                              {capitalize(item.name)} -{" "}
+                              {formatServings(item.servingsNeeded)}
+                            </p>
+                          </div>
+                        ))}
                     </div>
                   </div>
                 ) : (
@@ -256,7 +279,9 @@ export default function GroceryRecForm({ currentUser }) {
                 )}
                 {groceryList?.inventoryRecommendations?.length > 0 && (
                   <div>
-                    <p>While you're at the store, you may want to buy: </p>
+                    <p className="text-lg mt-2 mb-2">
+                      While you're at the store, you may want to buy:{" "}
+                    </p>
                     {groceryList.inventoryRecommendations.map((item, index) => (
                       <div
                         key={index}
@@ -266,8 +291,9 @@ export default function GroceryRecForm({ currentUser }) {
                             : "bg-yellow-50 border-yellow-200"
                         }`}
                       >
-                        <p>{capitalize(item.name)}</p>
-                        <p>{item.reason}</p>
+                        <p>
+                          {capitalize(item.name)}: {item.reason.toLowerCase()}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -275,6 +301,7 @@ export default function GroceryRecForm({ currentUser }) {
 
                 <div>
                   <button
+                    className="!bg-indigo-400 hover:!bg-indigo-500 !text-white !px-4 !py-2 !mt-3 !rounded-lg"
                     onClick={() =>
                       handleExport(
                         listToString(

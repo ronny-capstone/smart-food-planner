@@ -1,8 +1,13 @@
-const { getOwnedIngredients } = require("./groceryUtils");
 const { COST_PATH, GROCERY_LIST_PATH } = require("./backend_paths");
 const baseUrl = process.env.VITE_API_BASE_URL;
 const axios = require("axios");
 const fs = require("fs");
+const { isNameMatch } = require("./stringUtils");
+const {
+  getOwnedIngredients,
+  analyzeInventory,
+  calculateShoppingAndExpiring,
+} = require("./groceryUtils");
 
 const ingredientCostCache = new Map();
 
@@ -104,44 +109,63 @@ const calculateRecipeMetrics = async (userId, recipe, inventory) => {
       ...missedIngredients,
     ];
     const ownedIngredients = getOwnedIngredients(recipe, inventory);
+    // Calculate what user actually needs to buy
+    const actuallyMissedIngredients = totalIngredients.filter((ingredient) => {
+      return !ownedIngredients.some((owned) => isNameMatch(owned, ingredient));
+    });
 
     let cost = 0;
-    for (const ingredient of missedIngredients) {
-      try {
-        const costInfo = await getIngredientCost(
-          ingredient.id,
-          ingredient.amount,
-          ingredient.unit,
-          userId
-        );
-        if (costInfo && costInfo.cost) {
-          cost += costInfo.cost;
-        } else {
-          console.log(`No cost returned for: ${ingredient.name}`);
+    try {
+      // Uses same cost logic as final shopping list
+      const inventoryAnalysis = analyzeInventory(inventory);
+      const { shoppingList } = calculateShoppingAndExpiring(
+        [recipe],
+        inventoryAnalysis
+      );
+      if (shoppingList.length > 0) {
+        const result = await calculateShoppingListCost(shoppingList, userId);
+        cost = parseFloat(result.totalCost);
+      }
+    } catch (err) {
+      for (const ingredient of missedIngredients) {
+        try {
+          const costInfo = await getIngredientCost(
+            ingredient.id,
+            ingredient.amount,
+            ingredient.unit,
+            userId
+          );
+          if (costInfo && costInfo.cost) {
+            cost += costInfo.cost;
+          } else {
+            console.log(`No cost returned for: ${ingredient.name}`);
+          }
+        } catch (err) {
+          console.log("Failed for ", ingredient.name, err.message);
         }
-      } catch (err) {
-        console.log("Failed for ", ingredient.name, err.message);
       }
     }
 
     const metrics = {
       numTotalIngredients: totalIngredients.length,
-      numMissingIngredients: missedIngredients.length,
+      numMissingIngredients: actuallyMissedIngredients.length,
       cost: Number(cost.toFixed(2)),
       inventoryUsage: Number(
         (ownedIngredients.length / totalIngredients.length).toFixed(2)
       ),
       ownedIngredients,
+      missedIngredients: actuallyMissedIngredients,
     };
+
     return metrics;
   } catch (err) {
-    console.error(`Error calculating metrics for recipe ${recipe.title}`, err);
     return {
       numTotalIngredients: 0,
       numMissingIngredients: 0,
       cost: 0,
       inventoryUsage: 0,
       ownedIngredients: [],
+      missedIngredients: recipe.missedIngredients || [],
     };
   }
 };

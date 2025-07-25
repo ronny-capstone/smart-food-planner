@@ -18,8 +18,21 @@ const isNameMatch = (ingredient, inventoryItem) => {
   return false;
 };
 
-const capitalize = (string) => {
-  return string.charAt(0).toUpperCase() + string.slice(1);
+const isNameMatchNames = (ingredientName, inventoryName) => {
+  // Exact match
+  if (ingredientName === inventoryName) {
+    return true;
+  }
+
+  // Check for plurals
+  if (
+    ingredientName + "s" === inventoryName ||
+    inventoryName + "s" === ingredientName
+  ) {
+    return true;
+  }
+
+  return false;
 };
 
-module.exports = { capitalize, isNameMatch };
+module.exports = { isNameMatch, isNameMatchNames };
