@@ -14,11 +14,17 @@ const {
 
 // Generate three optimized grocery lists, based on user budget and inventory
 const groceryRecommendation = async (userId, preferences, inventory) => {
-  const { budget } = preferences;
+  const { budget, allowRepeats = false, maxRepeats = 1 } = preferences;
 
   try {
     // Generate all three meal plans
-    const mealPlan = await generateMealPlans(userId, budget, inventory);
+    const mealPlan = await generateMealPlans(
+      userId,
+      budget,
+      inventory,
+      allowRepeats,
+      maxRepeats
+    );
 
     // If no meal plans could be planned
     if (!mealPlan || Object.keys(mealPlan).length === 0) {
@@ -76,7 +82,13 @@ const groceryRecommendation = async (userId, preferences, inventory) => {
 
 // Generates three grocery list types by fetching recipes from recommendation API
 // and calculating metrics (cost, inventory usage, etc.) for each recipe
-const generateMealPlans = async (userId, budget, inventory) => {
+const generateMealPlans = async (
+  userId,
+  budget,
+  inventory,
+  allowRepeats = false,
+  maxRepeats = 1
+) => {
   try {
     // Call recipe recommendation system to get base recipes
     const response = await axios.get(
@@ -84,7 +96,7 @@ const generateMealPlans = async (userId, budget, inventory) => {
       {
         params: {
           ingredientType: "partial",
-          maxMissing: 4,
+          maxMissing: 5,
           priority: "balanced",
           expirationToggle: true,
           useCase: "grocery",
@@ -148,7 +160,9 @@ const generateMealPlans = async (userId, budget, inventory) => {
       recipesWithMetrics,
       budget,
       inventory,
-      userId
+      userId,
+      allowRepeats,
+      maxRepeats
     );
 
     // Generates grocery list optimized for inventory usage
@@ -156,7 +170,9 @@ const generateMealPlans = async (userId, budget, inventory) => {
       recipesWithMetrics,
       budget,
       inventory,
-      userId
+      userId,
+      allowRepeats,
+      maxRepeats
     );
 
     // Generates grocery list optimized for recipe complexity
@@ -164,14 +180,18 @@ const generateMealPlans = async (userId, budget, inventory) => {
       recipesWithMetrics,
       budget,
       inventory,
-      userId
+      userId,
+      allowRepeats,
+      maxRepeats
     );
 
     const bestOverall = await generateBestOverall(
       recipesWithMetrics,
       budget,
       inventory,
-      userId
+      userId,
+      allowRepeats,
+      maxRepeats
     );
 
     return {
@@ -202,100 +222,6 @@ const generateMealPlans = async (userId, budget, inventory) => {
       },
     };
   }
-};
-
-// Generates "best overall" grocery list that combines all 3 approaches
-const generateBestOverall = async (
-  recipesWithMetrics,
-  budget,
-  inventory,
-  userId
-) => {
-  // Calculate scores
-  const weights = {
-    budget: 0.5,
-    inventory: 0.35,
-    complexity: 0.15,
-  };
-
-  const maxValues = normalizeScores(recipesWithMetrics);
-  const recipesWithScores = recipesWithMetrics.map((recipe) => {
-    const scores = calculateRecipeScores(recipe, maxValues);
-    const totalScore =
-      scores.budget * weights.budget +
-      scores.inventory * weights.inventory +
-      scores.complexity * weights.complexity;
-    return {
-      ...recipe,
-      scores: {
-        ...scores,
-        total: totalScore,
-      },
-    };
-  });
-  // Sort by overall score, highest to lowest
-  const sortedRecipes = recipesWithScores.sort(
-    (a, b) => b.scores.total - a.scores.total
-  );
-  // Select recipes within budget
-  const selectedRecipes = [];
-  let totalCost = 0;
-  for (const recipe of sortedRecipes) {
-    const recipeCost = recipe.cost || 0;
-    if (totalCost + recipeCost <= budget) {
-      selectedRecipes.push(recipe);
-      totalCost += recipeCost;
-    }
-  }
-
-  const mealsCount = selectedRecipes.length;
-  const budgetUsed = (totalCost / budget) * 100;
-  const groceryList = await generateGroceryList(
-    selectedRecipes,
-    inventory,
-    userId
-  );
-
-  return {
-    type: "Best Overall",
-    recipes: selectedRecipes,
-    totalCost: Number(totalCost.toFixed(2)),
-    mealsCount: mealsCount,
-    avgCostPerMeal:
-      mealsCount > 0 ? Number((totalCost / mealsCount).toFixed(2)) : 0,
-    budgetUtilization: Number((totalCost / budget).toFixed(2)),
-    budgetUsed: Number(budgetUsed.toFixed(1)),
-    budgetRemaining: Number((budget - totalCost).toFixed(2)),
-    groceryList: groceryList,
-  };
-};
-
-// Normalize scores to 0-1 scale
-const normalizeScores = (recipes) => {
-  const costs = recipes.map((recipe) => recipe.cost || 0);
-  const missingIngredientCounts = recipes.map(
-    (recipe) => recipe.numMissingIngredients || 0
-  );
-  const ingredientCounts = recipes.map(
-    (recipe) => recipe.numTotalIngredients || 0
-  );
-
-  // Find extremes
-  const maxCost = Math.max(...costs);
-  const minCost = Math.min(...costs);
-  const maxMissing = Math.max(...missingIngredientCounts);
-  const minMissing = Math.min(...missingIngredientCounts);
-  const maxIngredients = Math.max(...ingredientCounts);
-  const minIngredients = Math.min(...ingredientCounts);
-
-  return {
-    minCost,
-    maxCost,
-    minMissing,
-    maxMissing,
-    minIngredients,
-    maxIngredients,
-  };
 };
 
 // Calculate scores for a recipe, from 0-1
@@ -336,7 +262,9 @@ const generateBudgetMaximized = async (
   recipesWithMetrics,
   budget,
   inventory,
-  userId
+  userId,
+  allowRepeats = false,
+  maxRepeats = 1
 ) => {
   // Sort recipes to prioritize cost efficiency
   const budgetOptimized = recipesWithMetrics.sort((a, b) => {
@@ -349,31 +277,60 @@ const generateBudgetMaximized = async (
     return a.numMissingIngredients - b.numMissingIngredients;
   });
 
-  // Get as many recipes as fit in budget
-  const { validRecipes, remainingBudget } = selectRecipesUnderBudget(
-    budgetOptimized,
-    budget
-  );
+  let selectedRecipes = [];
+  let totalCost = 0;
+  let remainingBudget = budget;
+  let usedInventory = new Set();
+  if (!allowRepeats) {
+    // Get as many recipes as fit in budget
+    const result = selectRecipesUnderBudget(budgetOptimized, budget);
+    selectedRecipes = result.validRecipes;
+    remainingBudget = result.remainingBudget;
+    totalCost = budget - remainingBudget;
+    usedInventory = result.usedInventory;
+  } else {
+    const { recipes: finalRecipes, cost: finalCost } = selectRecipesWithRepeats(
+      budgetOptimized,
+      budget,
+      maxRepeats
+    );
+    selectedRecipes = finalRecipes;
+    totalCost = finalCost;
+    remainingBudget = budget - totalCost;
+    // Calculate used inventory for repeated recipes
+    selectedRecipes.forEach((recipe) => {
+      if (recipe.ownedIngredients) {
+        recipe.ownedIngredients.forEach((ingredient) => {
+          usedInventory.add(ingredient.name);
+        });
+      }
+    });
+  }
 
   // Generate grocery list with costs
   const groceryList = await generateGroceryList(
-    validRecipes,
+    selectedRecipes,
     inventory,
     userId
   );
 
   return {
     type: "Budget Maximizer",
-    recipes: validRecipes,
-    totalCost: budget - remainingBudget,
-    mealsCount: validRecipes.length,
+    recipes: selectedRecipes,
+    totalCost: Number(totalCost.toFixed(2)),
+    mealsCount: selectedRecipes.length,
     avgCostPerMeal:
-      validRecipes.length > 0
-        ? Number(((budget - remainingBudget) / validRecipes.length).toFixed(2))
+      selectedRecipes.length > 0
+        ? Number((totalCost / selectedRecipes.length).toFixed(2))
         : 0,
-    budgetUtilization: Number(((budget - remainingBudget) / budget).toFixed(2)),
+    budgetUtilization: Number((totalCost / budget).toFixed(2)),
     groceryList,
-    budgetRemaining: remainingBudget,
+    inventoryUtilization: Number(
+      (usedInventory.size / inventory.length).toFixed(2)
+    ),
+    budgetRemaining: Number(remainingBudget.toFixed(2)),
+    allowRepeats,
+    maxRepeats: allowRepeats ? maxRepeats : 1,
   };
 };
 
@@ -383,7 +340,9 @@ const generateInventoryMaximized = async (
   recipesWithMetrics,
   budget,
   inventory,
-  userId
+  userId,
+  allowRepeats = false,
+  maxRepeats = 1
 ) => {
   // Sort recipes to prioritize inventory usage
   const inventoryOptimized = recipesWithMetrics.sort((a, b) => {
@@ -395,31 +354,59 @@ const generateInventoryMaximized = async (
     return a.numMissingIngredients - b.numMissingIngredients;
   });
 
-  // Get as many recipes as fit in budget
-  const { validRecipes, remainingBudget, usedInventory } =
-    selectRecipesUnderBudget(inventoryOptimized, budget);
+  let selectedRecipes = [];
+  let totalCost = 0;
+  let remainingBudget = budget;
+  let usedInventory = new Set();
+  if (!allowRepeats) {
+    // Get as many recipes as fit in budget
+    const result = selectRecipesUnderBudget(inventoryOptimized, budget);
+    selectedRecipes = result.validRecipes;
+    remainingBudget = result.remainingBudget;
+    usedInventory = result.usedInventory;
+    totalCost = budget - remainingBudget;
+  } else {
+    const { recipes: finalRecipes, cost: finalCost } = selectRecipesWithRepeats(
+      inventoryOptimized,
+      budget,
+      maxRepeats
+    );
+    selectedRecipes = finalRecipes;
+    totalCost = finalCost;
+    remainingBudget = budget - totalCost;
+    // Calculate used inventory for repeated recipes
+    selectedRecipes.forEach((recipe) => {
+      if (recipe.ownedIngredients) {
+        recipe.ownedIngredients.forEach((ingredient) => {
+          usedInventory.add(ingredient.name);
+        });
+      }
+    });
+  }
 
   // Generate grocery list with costs
   const groceryList = await generateGroceryList(
-    validRecipes,
+    selectedRecipes,
     inventory,
     userId
   );
   return {
     type: "Inventory Maximizer",
-    recipes: validRecipes,
-    totalCost: budget - remainingBudget,
-    mealsCount: validRecipes.length,
+    recipes: selectedRecipes,
+    totalCost: Number(totalCost.toFixed(2)),
+    mealsCount: selectedRecipes.length,
     avgCostPerMeal:
-      validRecipes.length > 0
-        ? Number(((budget - remainingBudget) / validRecipes.length).toFixed(2))
+      selectedRecipes.length > 0
+        ? Number((totalCost / selectedRecipes.length).toFixed(2))
         : 0,
     inventoryUtilization: Number(
       (usedInventory.size / inventory.length).toFixed(2)
     ),
     groceryList,
     inventoryItemsUsed: usedInventory.size,
-    budgetRemaining: remainingBudget,
+    budgetRemaining: Number(remainingBudget.toFixed(2)),
+    allowRepeats,
+    maxRepeats: allowRepeats ? maxRepeats : 1,
   };
 };
 
@@ -429,7 +416,9 @@ const generateComplexityMaximized = async (
   recipesWithMetrics,
   budget,
   inventory,
-  userId
+  userId,
+  allowRepeats = false,
+  maxRepeats = 1
 ) => {
   // Sort recipes to prioritize recipe complexity
   const complexityOptimized = recipesWithMetrics.sort((a, b) => {
@@ -441,30 +430,62 @@ const generateComplexityMaximized = async (
     return (b.readyInMinutes || 0) - (a.readyInMinutes || 0);
   });
 
-  // Get as many recipes as fit in budget
-  const { validRecipes, remainingBudget } = selectRecipesUnderBudget(
-    complexityOptimized,
-    budget
-  );
+  let selectedRecipes = [];
+  let totalCost = 0;
+  let remainingBudget = budget;
+  let usedInventory = new Set();
+  if (!allowRepeats) {
+    // Get as many recipes as fit in budget
+    const result = selectRecipesUnderBudget(complexityOptimized, budget);
+    selectedRecipes = result.validRecipes;
+    remainingBudget = result.remainingBudget;
+    totalCost = budget - remainingBudget;
+    usedInventory = result.usedInventory;
+  } else {
+    const { recipes: finalRecipes, cost: finalCost } = selectRecipesWithRepeats(
+      complexityOptimized,
+      budget,
+      maxRepeats
+    );
+    selectedRecipes = finalRecipes;
+    totalCost = finalCost;
+    remainingBudget = budget - totalCost;
+    // Calculate used inventory for repeated recipes
+    selectedRecipes.forEach((recipe) => {
+      if (recipe.ownedIngredients) {
+        recipe.ownedIngredients.forEach((ingredient) => {
+          usedInventory.add(ingredient.name);
+        });
+      }
+    });
+  }
 
   // Generate grocery list with costs
   const groceryList = await generateGroceryList(
-    validRecipes,
+    selectedRecipes,
     inventory,
     userId
   );
 
   return {
     type: "Complexity Maximizer",
-    recipes: validRecipes,
-    totalCost: budget - remainingBudget,
-    mealsCount: validRecipes.length,
-    avgIngredientsPerMeal: Math.ceil(
-      validRecipes.reduce((sum, r) => sum + r.numTotalIngredients, 0) /
-        validRecipes.length
-    ),
+    recipes: selectedRecipes,
+    totalCost: Number(totalCost.toFixed(2)),
+    mealsCount: selectedRecipes.length,
+    avgIngredientsPerMeal:
+      selectedRecipes.length > 0
+        ? Math.ceil(
+            selectedRecipes.reduce((sum, r) => sum + r.numTotalIngredients, 0) /
+              selectedRecipes.length
+          )
+        : 0,
     groceryList,
-    budgetRemaining: remainingBudget,
+    inventoryUtilization: Number(
+      (usedInventory.size / inventory.length).toFixed(2)
+    ),
+    budgetRemaining: Number(remainingBudget.toFixed(2)),
+    allowRepeats,
+    maxRepeats: allowRepeats ? maxRepeats : 1,
   };
 };
 
@@ -537,6 +558,153 @@ const generateGroceryList = async (recipes, inventory, userId) => {
       itemsNeeded: 0,
     };
   }
+};
+
+// Generates "best overall" grocery list that combines all 3 approaches
+const generateBestOverall = async (
+  recipesWithMetrics,
+  budget,
+  inventory,
+  userId,
+  allowRepeats = false,
+  maxRepeats = 1
+) => {
+  // Calculate scores
+  const weights = {
+    budget: 0.5,
+    inventory: 0.35,
+    complexity: 0.15,
+  };
+
+  let selectedRecipes = [];
+  let totalCost = 0;
+  let groceryList = {};
+  let usedInventory = new Set();
+  try {
+    const maxValues = normalizeScores(recipesWithMetrics);
+    const recipesWithScores = recipesWithMetrics.map((recipe) => {
+      const scores = calculateRecipeScores(recipe, maxValues);
+      const totalScore =
+        scores.budget * weights.budget +
+        scores.inventory * weights.inventory +
+        scores.complexity * weights.complexity;
+      return {
+        ...recipe,
+        scores: {
+          ...scores,
+          total: totalScore,
+        },
+      };
+    });
+    // Sort by overall score, highest to lowest
+    const sortedRecipes = recipesWithScores.sort(
+      (a, b) => b.scores.total - a.scores.total
+    );
+    // Select recipes within budget
+
+    if (!allowRepeats) {
+      for (const recipe of sortedRecipes) {
+        const recipeCost = recipe.cost || 0;
+        if (totalCost + recipeCost <= budget) {
+          selectedRecipes.push(recipe);
+          totalCost += recipeCost;
+        }
+      }
+    } else {
+      const { recipes: finalRecipes, cost: finalCost } =
+        selectRecipesWithRepeats(sortedRecipes, budget, maxRepeats);
+      selectedRecipes = finalRecipes;
+      totalCost = finalCost;
+    }
+    // Calculate used inventory for repeated recipes
+    selectedRecipes.forEach((recipe) => {
+      if (recipe.ownedIngredients) {
+        recipe.ownedIngredients.forEach((ingredient) => {
+          usedInventory.add(ingredient.name);
+        });
+      }
+    });
+
+    groceryList = await generateGroceryList(selectedRecipes, inventory, userId);
+  } catch (err) {
+    console.error(`Error in generateBestOverall:`, err);
+    throw err;
+  }
+
+  return {
+    type: "Best Overall",
+    recipes: selectedRecipes,
+    totalCost: Number(totalCost.toFixed(2)),
+    mealsCount: selectedRecipes.length,
+    avgCostPerMeal:
+      selectedRecipes.length > 0
+        ? Number((totalCost / selectedRecipes.length).toFixed(2))
+        : 0,
+    budgetUtilization: Number((totalCost / budget).toFixed(2)),
+    budgetUsed: Number(((totalCost / budget) * 100).toFixed(1)),
+    budgetRemaining: Number((budget - totalCost).toFixed(2)),
+    inventoryUtilization: Number(
+      (usedInventory.size / inventory.length).toFixed(2)
+    ),
+    groceryList,
+    allowRepeats,
+    maxRepeats: allowRepeats ? maxRepeats : 1,
+  };
+};
+
+const selectRecipesWithRepeats = (sortedRecipes, budget, maxRepeats) => {
+  const selectedRecipes = [];
+  const recipeFrequencies = new Map();
+  let totalCost = 0;
+  // Keep adding best recipe until we can't afford it, or reach max repeats
+  while (totalCost < budget) {
+    let addedRecipe = false;
+    for (const recipe of sortedRecipes) {
+      const recipeCost = recipe.cost || 0;
+      const currentFrequency = recipeFrequencies.get(recipe.id) || 0;
+      if (totalCost + recipeCost <= budget && currentFrequency < maxRepeats) {
+        selectedRecipes.push({ ...recipe, repeatNumber: currentFrequency + 1 });
+        recipeFrequencies.set(recipe.id, currentFrequency + 1);
+        totalCost += recipeCost;
+        addedRecipe = true;
+        break;
+      }
+    }
+
+    // If we couldn't add any recipe, done searching
+    if (!addedRecipe) {
+      break;
+    }
+  }
+  return { recipes: selectedRecipes, cost: totalCost };
+};
+
+// Normalize scores to 0-1 scale
+const normalizeScores = (recipes) => {
+  const costs = recipes.map((recipe) => recipe.cost || 0);
+  const missingIngredientCounts = recipes.map(
+    (recipe) => recipe.numMissingIngredients || 0
+  );
+  const ingredientCounts = recipes.map(
+    (recipe) => recipe.numTotalIngredients || 0
+  );
+
+  // Find extremes
+  const maxCost = Math.max(...costs);
+  const minCost = Math.min(...costs);
+  const maxMissing = Math.max(...missingIngredientCounts);
+  const minMissing = Math.min(...missingIngredientCounts);
+  const maxIngredients = Math.max(...ingredientCounts);
+  const minIngredients = Math.min(...ingredientCounts);
+
+  return {
+    minCost,
+    maxCost,
+    minMissing,
+    maxMissing,
+    minIngredients,
+    maxIngredients,
+  };
 };
 
 module.exports = {

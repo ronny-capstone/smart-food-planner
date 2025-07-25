@@ -24,7 +24,11 @@ const { GENERATE_CONSTANTS } = require("../utils/groceryConstants");
 // Get user's full grocery list
 groceryListRoutes.get(`${GENERATE_PATH}/:userId`, async (req, res) => {
   const { userId } = req.params;
-  const { budget = GENERATE_CONSTANTS.BUDGET } = req.query;
+  const {
+    budget = GENERATE_CONSTANTS.BUDGET,
+    allowRepeats = false,
+    maxRepeats = 1,
+  } = req.query;
 
   try {
     db.all(
@@ -50,7 +54,9 @@ groceryListRoutes.get(`${GENERATE_PATH}/:userId`, async (req, res) => {
           const listTypes = await groceryRecommendation(
             userId,
             {
-              budget,
+              budget: parseFloat(budget),
+              allowRepeats: allowRepeats === "true",
+              maxRepeats: parseInt(maxRepeats),
             },
             inventory
           );
@@ -71,7 +77,7 @@ groceryListRoutes.get(`${GENERATE_PATH}/:userId`, async (req, res) => {
                 budgetUsed: listTypes.bestOverall.totalCost
                   ? Number(
                       (
-                        (listTypes.budgetMaximized.totalCost / budget) *
+                        (listTypes.bestOverall.totalCost / budget) *
                         100
                       ).toFixed(1)
                     )
