@@ -29,7 +29,6 @@ groceryListRoutes.get(`${GENERATE_PATH}/:userId`, async (req, res) => {
     allowRepeats = false,
     maxRepeats = 1,
   } = req.query;
-
   try {
     db.all(
       `SELECT * FROM inventory WHERE user_id = ?`,

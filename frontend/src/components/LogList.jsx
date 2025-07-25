@@ -105,7 +105,7 @@ export default function LogList({ currentUser }) {
 
   return (
     <div>
-      <button onClick={openAddModal}>Add new log</button>
+      <button onClick={openAddModal}>Add New Log</button>
       {activeModal === "add" && (
         <LogModal onClose={closeModal}>
           {" "}

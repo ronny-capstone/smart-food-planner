@@ -192,7 +192,6 @@ export default function GroceryRecForm({ currentUser }) {
 
       <div className="mb-1 w-full max-w-sm">
         <button id="generateBtn" type="submit" onClick={handleSubmit}>
-          {" "}
           Generate Grocery List
         </button>
       </div>
@@ -211,7 +210,6 @@ export default function GroceryRecForm({ currentUser }) {
               return null;
             }
             const groceryList = groceryType.groceryList || {};
-
             return (
               <div key={type} className="mb-8 p-4 border rounded">
                 <h3 className="text-xl font-semibold text-gray-800 mb-1">

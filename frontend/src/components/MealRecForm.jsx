@@ -233,7 +233,6 @@ export default function MealRecForm({ currentUser }) {
             ))}
           </select>
         </label>
-
         <div>
           <p>Nutrition Filters</p>
           <p>Calories</p>
