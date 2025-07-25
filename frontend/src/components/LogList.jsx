@@ -105,7 +105,7 @@ export default function LogList({ currentUser }) {
 
   return (
     <div>
-      <button onClick={openAddModal}>Add new log</button>
+      <button onClick={openAddModal}>Add New Log</button>
       {activeModal === "add" && (
         <LogModal onClose={closeModal}>
           {" "}
@@ -134,8 +134,8 @@ export default function LogList({ currentUser }) {
                   Food item: {getFoodNameById(log.item_id)}
                 </p>
                 <p className="log-servings"> Servings: {log.servings} </p>
-                <button onClick={() => openUpdateModal(log)}>Update</button>
-                <button onClick={() => handleDelete(log)}>Delete</button>
+                <button id="editBtn" onClick={() => openUpdateModal(log)}>Update</button>
+                <button id="deleteBtn" onClick={() => handleDelete(log)}>Delete</button>
                 {activeModal === `update-${log.id}` && (
                   <LogModal onClose={closeModal}>
                     {" "}

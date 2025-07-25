@@ -112,7 +112,9 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           setActivityLevel("");
           setHealthGoal("");
           setDietaryPreferences("");
-          toast.success(`Profile ${isUpdating ? "updated" : "created"} successfully`);
+          toast.success(
+            `Profile ${isUpdating ? "updated" : "created"} successfully`
+          );
 
           if (profileSubmit) {
             profileSubmit();
@@ -234,9 +236,15 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
         </div>
 
         <div className="mb-1 w-full max-w-sm">
-          <button type="submit" onClick={handleSubmit}>
-            {isUpdating ? "Update Profile" : "Create Profile"}
-          </button>
+          {isUpdating ? (
+            <button id="editBtn" type="submit" onClick={handleSubmit}>
+              Update Profile
+            </button>
+          ) : (
+            <button type="submit" onClick={handleSubmit}>
+              Create Profile
+            </button>
+          )}
         </div>
       </div>
     </form>

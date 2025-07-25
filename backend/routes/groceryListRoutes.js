@@ -19,20 +19,12 @@ const {
   groceryRecommendation,
 } = require("../recommendation/groceryRecommendation.js");
 const { exportGroceries } = require("../utils/exportGroceries.js");
-const {
-  GENERATE_CONSTANTS,
-  MEAL_CONSTANTS,
-} = require("../utils/groceryConstants");
+const { GENERATE_CONSTANTS } = require("../utils/groceryConstants");
 
 // Get user's full grocery list
 groceryListRoutes.get(`${GENERATE_PATH}/:userId`, async (req, res) => {
   const { userId } = req.params;
-  const {
-    budget = GENERATE_CONSTANTS.BUDGET,
-    totalMeals = MEAL_CONSTANTS.TOTAL_MEALS,
-    allowRepeats = GENERATE_CONSTANTS.ALLOW_REPEATS,
-    maxRepeats = MEAL_CONSTANTS.MAX_REPEATS,
-  } = req.query;
+  const { budget = GENERATE_CONSTANTS.BUDGET } = req.query;
 
   try {
     db.all(
@@ -54,29 +46,88 @@ groceryListRoutes.get(`${GENERATE_PATH}/:userId`, async (req, res) => {
           });
         }
 
-        const groceryList = await groceryRecommendation(
-          userId,
-          {
-            budget,
-            mealsNum: totalMeals,
-            allowRepeats,
-            maxRepeats,
-          },
-          inventory
-        );
-        const budgetUsed = Math.round((groceryList.totalCost / budget) * 100);
-        res.json({
-          success: true,
-          groceries: groceryList,
-          totalCost: groceryList.totalCost,
-          budgetUsed: budgetUsed,
-        });
+        try {
+          const listTypes = await groceryRecommendation(
+            userId,
+            {
+              budget,
+            },
+            inventory
+          );
+
+          if (!listTypes || Object.keys(listTypes).length === 0) {
+            return res.json({
+              success: true,
+              types: null,
+              message: "No meal plans could be generated.",
+            });
+          }
+
+          const response = {
+            success: true,
+            types: {
+              bestOverall: {
+                ...listTypes.bestOverall,
+                budgetUsed: listTypes.bestOverall.totalCost
+                  ? Number(
+                      (
+                        (listTypes.budgetMaximized.totalCost / budget) *
+                        100
+                      ).toFixed(1)
+                    )
+                  : 0,
+              },
+              budgetMaximizer: {
+                ...listTypes.budgetMaximized,
+                budgetUsed: listTypes.budgetMaximized.totalCost
+                  ? Number(
+                      (
+                        (listTypes.budgetMaximized.totalCost / budget) *
+                        100
+                      ).toFixed(1)
+                    )
+                  : 0,
+              },
+              inventoryMaximizer: {
+                ...listTypes.inventoryMaximized,
+                budgetUsed: listTypes.inventoryMaximized.totalCost
+                  ? Number(
+                      (
+                        (listTypes.inventoryMaximized.totalCost / budget) *
+                        100
+                      ).toFixed(1)
+                    )
+                  : 0,
+              },
+              complexityMaximizer: {
+                ...listTypes.complexityMaximized,
+                budgetUsed: listTypes.complexityMaximized.totalCost
+                  ? Number(
+                      (
+                        (listTypes.complexityMaximized.totalCost / budget) *
+                        100
+                      ).toFixed(1)
+                    )
+                  : 0,
+              },
+            },
+            budget: budget,
+            message: "Generated three grocery list types successfully!",
+          };
+
+          res.json(response);
+        } catch (err) {
+          res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: "Error generating grocery list",
+          });
+        }
       }
     );
   } catch (err) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Error generating grocery list",
+      message: "Unexpected server error",
     });
   }
 });

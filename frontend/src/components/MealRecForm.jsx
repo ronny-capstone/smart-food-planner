@@ -113,6 +113,7 @@ export default function MealRecForm({ currentUser }) {
       expirationToggle: form.prioritizeExpiring,
       priority: form.selectedPriority,
       useDiet: form.useDiet,
+      useCase: "recipe"
     };
 
     Object.entries(queryParams).forEach(([key, value]) => {
@@ -232,7 +233,6 @@ export default function MealRecForm({ currentUser }) {
             ))}
           </select>
         </label>
-
         <div>
           <p>Nutrition Filters</p>
           <p>Calories</p>
@@ -352,7 +352,7 @@ export default function MealRecForm({ currentUser }) {
       </div>
 
       <div className="mb-1 w-full max-w-sm">
-        <button type="submit" onClick={handleSubmit}>
+        <button id="generateBtn" type="submit" onClick={handleSubmit}>
           Suggest Meal
         </button>
       </div>

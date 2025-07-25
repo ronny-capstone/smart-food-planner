@@ -10,8 +10,8 @@ export default function GroceryCard({ grocery, handleEdit, handleDelete }) {
       <p>Added: {formatDateString(grocery.added_date)}</p>
       <p>Servings: {grocery.quantity}</p>
 
-      <button onClick={() => handleEdit(grocery)}>Edit</button>
-      <button onClick={() => handleDelete(grocery)}>Remove</button>
+      <button id="editBtn" onClick={() => handleEdit(grocery)}>Edit</button>
+      <button id="deleteBtn" onClick={() => handleDelete(grocery)}>Remove</button>
     </div>
   );
 }
