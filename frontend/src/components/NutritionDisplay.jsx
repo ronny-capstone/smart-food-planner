@@ -165,15 +165,16 @@ export default function NutritionDisplay({ currentUser }) {
     return { percentCalories, percentProtein, percentCarbs, percentFats };
   };
 
-  const getStatusColor = (percentProgress) => {
-    if (percentProgress >= 100) {
-      return "bg-green-100 text-green-800 border-green-200";
-    } else if (percentProgress >= 75) {
-      return "bg-orange-100 text-orange-800 border-orange-200";
-    } else if (percentProgress >= 50) {
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+  const getProgressBarColor = (percentProgress) => {
+    const percent = parseFloat(percentProgress);
+    if (percent >= 75) {
+      return "progress-bar-high";
+    } else if (percent >= 50) {
+      return "progress-bar-medium";
+    } else if (percent >= 25) {
+      return "progress-bar-low";
     } else {
-      return "bg-red-100 text-red-800 border-red-200";
+      return "progress-bar-very-low";
     }
   };
 
@@ -197,21 +198,33 @@ export default function NutritionDisplay({ currentUser }) {
         <p>
           {caloriesConsumed.toFixed(2)}kcal / {calorieGoal}kcal
         </p>
-        <p className={getStatusColor(calorieProgress)}>
-          {" "}
-          {calorieProgress}% progress to goal
-        </p>
+        <div className="progress-bar">
+          <div
+            className={`progress-fill ${getProgressBarColor(
+              calorieProgress
+            )} calorie`}
+            style={{ width: `${calorieProgress}%` }}
+          >
+            {calorieProgress}% progress
+          </div>
+        </div>
       </div>
 
       <div>
-        <p className="text-lg text-gray-600">Protein Goal</p>
+        <p d="text-lg text-gray-600">Protein Goal</p>
         <p>
           {proteinConsumed.toFixed(2)}g / {proteinGoal}g
         </p>
-        <p className={getStatusColor(proteinProgress)}>
-          {" "}
-          {proteinProgress}% progress to goal
-        </p>
+        <div className="progress-bar">
+          <div
+            className={`progress-fill ${getProgressBarColor(
+              proteinProgress
+            )} protein`}
+            style={{ width: `${proteinProgress}%` }}
+          >
+            {proteinProgress}% progress
+          </div>
+        </div>
       </div>
 
       <div>
@@ -219,10 +232,17 @@ export default function NutritionDisplay({ currentUser }) {
         <p>
           {carbsConsumed.toFixed(2)}g / {carbGoal}g
         </p>
-        <p className={getStatusColor(carbProgress)}>
-          {" "}
-          {carbProgress}% progress to goal
-        </p>
+        <div className="progress-bar">
+          <div
+            className={`progress-fill ${getProgressBarColor(
+              carbProgress
+            )} carb`}
+            style={{ width: `${carbProgress}%` }}
+          >
+            {" "}
+            {carbProgress}% progress
+          </div>
+        </div>
       </div>
 
       <div>
@@ -230,9 +250,14 @@ export default function NutritionDisplay({ currentUser }) {
         <p>
           {fatsConsumed.toFixed(2)}g / {fatsGoal}g
         </p>
-        <p className={getStatusColor(fatsProgress)}>
-          {fatsProgress}% progress to goal
-        </p>
+        <div className="progress-bar">
+          <div
+            className={`progress-fill ${getProgressBarColor(fatsProgress)} fat`}
+            style={{ width: `${fatsProgress}%` }}
+          >
+            {fatsProgress}% progress
+          </div>
+        </div>
       </div>
 
       <h3> Nutrition Info: </h3>
@@ -250,6 +275,8 @@ export default function NutritionDisplay({ currentUser }) {
         <p>Total number of calories you body burns in a day</p>
         <p>{tdee}</p>
       </div>
+
+      <script></script>
     </div>
   );
 }

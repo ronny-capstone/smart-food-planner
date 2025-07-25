@@ -86,3 +86,80 @@ button:focus-visible {
       16 16,
     auto;
 }
+
+.progress-bar {
+  width: 100%;
+  background-color: rgba(246, 246, 246, 0.825);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(85, 84, 84, 0.1);
+}
+
+.progress-fill {
+  height: 30px;
+  color: white;
+  text-align: center;
+  font-weight: 500;
+  width: 0%;
+  transition: width 1.5s ease-in-out;
+  border-radius: 8px;
+}
+
+.progress-bar-high.calorie {
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+}
+
+.progress-bar-medium.calorie {
+  background: linear-gradient(90deg, #3b82fb, #2563eb);
+}
+.progress-bar-low.calorie {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+}
+
+.progress-bar-very-low.calorie {
+  background: linear-gradient(90deg, #93c5fd, #60a5fa);
+}
+.progress-bar-high.protein {
+  background: linear-gradient(90deg, #dc2626, #b91c1c);
+}
+
+.progress-bar-medium.protein {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+.progress-bar-low.protein {
+  background: linear-gradient(90deg, #f87171, #ef4444);
+}
+
+.progress-bar-very-low.protein {
+  background: linear-gradient(90deg, #fca5a5, #f87171);
+}
+
+.progress-bar-high.carb {
+  background: linear-gradient(90deg, #d97706, #b45309);
+}
+
+.progress-bar-medium.carb {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+.progress-bar-low.carb {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.progress-bar-very-low.carb {
+  background: linear-gradient(90deg, #fde68a, #fbbf24);
+}
+
+.progress-bar-high.fat {
+  background: linear-gradient(90deg, #7c3aed, #6d28d9);
+}
+
+.progress-bar-medium.fat {
+  background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+}
+.progress-bar-low.fat {
+  background: linear-gradient(90deg, #a78bfa, #8b5cf6);
+}
+
+.progress-bar-very-low.fat {
+  background: linear-gradient(90deg, #c4b5fd, #a78bfa);
+}
