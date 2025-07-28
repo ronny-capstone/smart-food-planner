@@ -11,13 +11,13 @@ export default function InventoryCard({ item, handleEdit, handleDelete }) {
 
   const getStatusColor = (status) => {
     if (status === "Expired") {
-      return "bg-red-100 text-red-800 border-red-200";
+      return "bg-red-100 text-red-800 border-red-200 w-2/3 mx-auto";
     } else if (status === "Expiring soon") {
-      return "bg-orange-100 text-orange-800 border-orange-200";
+      return "bg-orange-100 text-orange-800 border-orange-200 w-2/3 mx-auto";
     } else if (status === "Expiring this week") {
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      return "bg-yellow-100 text-yellow-800 border-yellow-200 w-2/3 mx-auto";
     } else {
-      return "bg-green-100 text-green-800 border-green-200";
+      return "bg-green-100 text-green-800 border-green-200 w-2/3 mx-auto";
     }
   };
 
@@ -40,10 +40,18 @@ export default function InventoryCard({ item, handleEdit, handleDelete }) {
       <p className={getStatusColor(expirationStatus)}> {getStatusMessage()} </p>
       <p>Expires: {formatDateString(item.expiration_date)}</p>
       <p>Servings: {item.quantity}</p>
-      <button id="editBtn" onClick={() => handleEdit(item)}>
+      <button
+        className="!bg-sky-100 mr-1"
+        id="editBtn"
+        onClick={() => handleEdit(item)}
+      >
         Edit
       </button>
-      <button id="deleteBtn" onClick={() => handleDelete(item)}>
+      <button
+        className="!bg-zinc-100 ml-1"
+        id="deleteBtn"
+        onClick={() => handleDelete(item)}
+      >
         Remove
       </button>
     </div>

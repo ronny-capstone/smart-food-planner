@@ -134,10 +134,19 @@ export default function LogList({ currentUser }) {
                   Food item: {getFoodNameById(log.item_id)}
                 </p>
                 <p className="log-servings"> Servings: {log.servings} </p>
-                <button id="editBtn" onClick={() => openUpdateModal(log)}>
+                <button
+                  className="!bg-sky-100 mr-1"
+                  id="editBtn"
+                  onClick={() => openUpdateModal(log)}
+                >
                   Update
                 </button>
-                <button id="deleteBtn" onClick={() => handleDelete(log)}>
+
+                <button
+                  className="!bg-zinc-100 ml-1"
+                  id="deleteBtn"
+                  onClick={() => handleDelete(log)}
+                >
                   Delete
                 </button>
                 {activeModal === `update-${log.id}` && (

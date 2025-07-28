@@ -149,7 +149,7 @@ export default function MealRecForm({ currentUser }) {
 
   return (
     <div>
-      <h1>Meal Recommendation</h1>
+      <h1 className="mb-2">Meal Recommendation</h1>
 
       <div>
         <label>Meal Prioritization:</label>
@@ -352,7 +352,12 @@ export default function MealRecForm({ currentUser }) {
       </div>
 
       <div className="mb-1 w-full max-w-sm">
-        <button id="generateBtn" type="submit" onClick={handleSubmit}>
+        <button
+          className="!bg-emerald-50"
+          id="generateBtn"
+          type="submit"
+          onClick={handleSubmit}
+        >
           Suggest Meal
         </button>
       </div>

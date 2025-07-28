@@ -80,7 +80,7 @@ export default function Inventory({ currentUser, inventory, setInventory }) {
   return (
     <div>
       <h1> Inventory </h1>
-      <button onClick={openAddModal}>Add Food Item</button>
+      <button className = "!bg-emerald-50" onClick={openAddModal}>Add Food Item</button>
 
       {/* Add Modal */}
       {activeModal === "add" && (
