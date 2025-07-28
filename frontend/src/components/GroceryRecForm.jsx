@@ -196,132 +196,239 @@ export default function GroceryRecForm({ currentUser }) {
       )}
 
       <div className="mb-1 w-full max-w-sm">
-        <button className="!bg-emerald-50" id="generateBtn" type="submit" onClick={handleSubmit}>
+        <button
+          className="!bg-emerald-50"
+          id="generateBtn"
+          type="submit"
+          onClick={handleSubmit}
+        >
           Generate Grocery List
         </button>
       </div>
 
       {form.result?.types && !form.noResults && (
-        <div>
-          <h2>Grocery List Strategies</h2>
-          {[
-            "bestOverall",
-            "budgetMaximizer",
-            "inventoryMaximizer",
-            "complexityMaximizer",
-          ].map((type) => {
-            const groceryType = form.result.types[type];
-            if (!groceryType) {
-              return null;
-            }
-            const groceryList = groceryType.groceryList || {};
-            return (
-              <div key={type} className="mb-8 p-4 border rounded">
-                <h3 className="text-xl font-semibold text-gray-800 mb-1">
-                  {types[type].title}
-                </h3>
-                <p className="text-gray-600 mb-2">{types[type].text}</p>
-                <div className="grid grid-cols-2 gap-3 mb-3 p-4 bg-gray-50 rounded-lg">
-                  <div className="text-center">
-                    <p>
-                      Total cost: ${Number(groceryType.totalCost).toFixed(2)}{" "}
-                      out of ${form.budget} budget
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p>Budget Used: {groceryType.budgetUsed}%</p>
-                  </div>
-                  <div className="text-center">
-                    <p>Total meals: {groceryType.mealsCount} </p>
-                  </div>
-                  <div className="text-center">
-                    {groceryType.avgRecipeInventoryUsage !== undefined && (
+        <div
+          id="default-carousel"
+          className="relative w-full"
+          data-carousel="slide"
+        >
+          <div className="relative h-56 overflow-hidden rounded-lg md:h-96">
+            <h2>Grocery List Strategies</h2>
+            {[
+              "bestOverall",
+              "budgetMaximizer",
+              "inventoryMaximizer",
+              "complexityMaximizer",
+            ].map((type) => {
+              const groceryType = form.result.types[type];
+              if (!groceryType) {
+                return null;
+              }
+              const groceryList = groceryType.groceryList || {};
+              return (
+                // <div key={type} className="mb-8 p-4 border rounded">
+                <div
+                  key={type}
+                  className="hidden duration-700 ease-in-out"
+                  data-carousel-item
+                >
+                  <h3 className="text-xl font-semibold text-gray-800 mb-1">
+                    {types[type].title}
+                  </h3>
+                  <p className="text-gray-600 mb-2">{types[type].text}</p>
+                  <div className="grid grid-cols-2 gap-3 mb-3 p-4 bg-gray-50 rounded-lg">
+                    <div className="text-center">
                       <p>
-                        Avg. Ingredient Coverage:{" "}
-                        {Math.round(groceryType.avgRecipeInventoryUsage * 100)}%
+                        Total cost: ${Number(groceryType.totalCost).toFixed(2)}{" "}
+                        out of ${form.budget} budget
                       </p>
-                    )}
-                  </div>
-                </div>
-
-                {groceryType.recipes?.length > 0 && (
-                  <div>
-                    <h4 className="text-lg mb-1">Meal Plan:</h4>
-                    {groceryType.recipes.map((meal, index) => (
-                      <div key={index}>
+                    </div>
+                    <div className="text-center">
+                      <p>Budget Used: {groceryType.budgetUsed}%</p>
+                    </div>
+                    <div className="text-center">
+                      <p>Total meals: {groceryType.mealsCount} </p>
+                    </div>
+                    <div className="text-center">
+                      {groceryType.avgRecipeInventoryUsage !== undefined && (
                         <p>
-                          Meal {index + 1}: {meal.title}
-                          {meal.repeatNumber && meal.repeatNumber > 1 && (
-                            <span> (#{meal.repeatNumber})</span>
+                          Avg. Ingredient Coverage:{" "}
+                          {Math.round(
+                            groceryType.avgRecipeInventoryUsage * 100
                           )}
+                          %
                         </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {groceryList.shoppingList?.length > 0 ? (
-                  <div>
-                    <h4 className="text-lg mt-1 mb-1">Shopping List:</h4>
-                    <p className="font-semibold">
-                      Items to buy ({groceryList.itemsNeeded}){" "}
-                    </p>
-                    <div>
-                      {groceryList.shoppingList
-                        .sort((a, b) => a.name.localeCompare(b.name))
-                        .map((item, index) => (
-                          <div key={index}>
-                            <p>
-                              {capitalize(item.name)} -{" "}
-                              {formatServings(item.servingsNeeded)}
-                            </p>
-                          </div>
-                        ))}
+                      )}
                     </div>
                   </div>
-                ) : (
-                  <p>No items needed - you have everything!</p>
-                )}
-                {groceryList?.inventoryRecommendations?.length > 0 && (
-                  <div>
-                    <p className="text-lg mt-2 mb-2">
-                      While you're at the store, you may want to buy:{" "}
-                    </p>
-                    {groceryList.inventoryRecommendations.map((item, index) => (
-                      <div
-                        key={index}
-                        className={`border p-3 rounded ${
-                          item.type === "expiring-replacement"
-                            ? "bg-orange-50 border-orange-200"
-                            : "bg-yellow-50 border-yellow-200"
-                        }`}
-                      >
-                        <p>
-                          {capitalize(item.name)}: {item.reason.toLowerCase()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
 
-                <div>
-                  <button
-                    className="!bg-indigo-400 hover:!bg-indigo-500 !text-white !px-4 !py-2 !mt-3 !rounded-lg"
-                    onClick={() =>
-                      handleExport(
-                        listToString(
-                          groceryList.shoppingList,
-                          groceryList.inventoryRecommendations
+                  {groceryType.recipes?.length > 0 && (
+                    <div className="absolute block w-full -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+                      <h4 className="text-lg mb-1">Meal Plan:</h4>
+                      {groceryType.recipes.map((meal, index) => (
+                        <div key={index}>
+                          <p>
+                            Meal {index + 1}: {meal.title}
+                            {meal.repeatNumber && meal.repeatNumber > 1 && (
+                              <span> (#{meal.repeatNumber})</span>
+                            )}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {groceryList.shoppingList?.length > 0 ? (
+                    <div>
+                      <h4 className="text-lg mt-1 mb-1">Shopping List:</h4>
+                      <p className="font-semibold">
+                        Items to buy ({groceryList.itemsNeeded}){" "}
+                      </p>
+                      <div>
+                        {groceryList.shoppingList
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map((item, index) => (
+                            <div key={index}>
+                              <p>
+                                {capitalize(item.name)} -{" "}
+                                {formatServings(item.servingsNeeded)}
+                              </p>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p>No items needed - you have everything!</p>
+                  )}
+                  {groceryList?.inventoryRecommendations?.length > 0 && (
+                    <div>
+                      <p className="text-lg mt-2 mb-2">
+                        While you're at the store, you may want to buy:{" "}
+                      </p>
+                      {groceryList.inventoryRecommendations.map(
+                        (item, index) => (
+                          <div
+                            key={index}
+                            className={`border p-3 rounded ${
+                              item.type === "expiring-replacement"
+                                ? "bg-orange-50 border-orange-200"
+                                : "bg-yellow-50 border-yellow-200"
+                            }`}
+                          >
+                            <p>
+                              {capitalize(item.name)}:{" "}
+                              {item.reason.toLowerCase()}
+                            </p>
+                          </div>
                         )
-                      )
-                    }
-                  >
-                    Export grocery list
-                  </button>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <button
+                      className="!bg-indigo-400 hover:!bg-indigo-500 !text-white !px-4 !py-2 !mt-3 !rounded-lg"
+                      onClick={() =>
+                        handleExport(
+                          listToString(
+                            groceryList.shoppingList,
+                            groceryList.inventoryRecommendations
+                          )
+                        )
+                      }
+                    >
+                      Export grocery list
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+            <div className="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-3 rtl:space-x-reverse">
+              <button
+                type="button"
+                className="w-3 h-3 rounded-full"
+                aria-current="true"
+                aria-label="Slide 1"
+                data-carousel-slide-to="0"
+              ></button>
+              <button
+                type="button"
+                className="w-3 h-3 rounded-full"
+                aria-current="false"
+                aria-label="Slide 2"
+                data-carousel-slide-to="1"
+              ></button>
+              <button
+                type="button"
+                className="w-3 h-3 rounded-full"
+                aria-current="false"
+                aria-label="Slide 3"
+                data-carousel-slide-to="2"
+              ></button>
+              <button
+                type="button"
+                className="w-3 h-3 rounded-full"
+                aria-current="false"
+                aria-label="Slide 4"
+                data-carousel-slide-to="3"
+              ></button>
+              <button
+                type="button"
+                className="w-3 h-3 rounded-full"
+                aria-current="false"
+                aria-label="Slide 5"
+                data-carousel-slide-to="4"
+              ></button>
+            </div>
+            <button
+              type="button"
+              className="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none"
+              data-carousel-prev
+            >
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30 dark:bg-gray-800/30 group-hover:bg-white/50 dark:group-hover:bg-gray-800/60 group-focus:ring-4 group-focus:ring-white dark:group-focus:ring-gray-800/70 group-focus:outline-none">
+                <svg
+                  className="w-4 h-4 text-white dark:text-gray-800 rtl:rotate-180"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 6 10"
+                >
+                  <path
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 1 1 5l4 4"
+                  />
+                </svg>
+                <span className="sr-only">Previous</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="absolute top-0 end-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none"
+              data-carousel-next
+            >
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30 dark:bg-gray-800/30 group-hover:bg-white/50 dark:group-hover:bg-gray-800/60 group-focus:ring-4 group-focus:ring-white dark:group-focus:ring-gray-800/70 group-focus:outline-none">
+                <svg
+                  className="w-4 h-4 text-white dark:text-gray-800 rtl:rotate-180"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 6 10"
+                >
+                  <path
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="m1 9 4-4-4-4"
+                  />
+                </svg>
+                <span className="sr-only">Next</span>
+              </span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -339,6 +446,7 @@ export default function GroceryRecForm({ currentUser }) {
           <p> Grocery list could not be generated. </p>
         </div>
       )}
+      <script src="../path/to/flowbite/dist/flowbite.min.js"></script>
     </div>
   );
 }
