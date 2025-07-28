@@ -18,6 +18,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [showGoals, setShowGoals] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
   // User id for logged in user
   const [currentUser, setCurrentUser] = useState(null);
   const [inventory, setInventory] = useState([]);
@@ -164,6 +165,9 @@ function App() {
                   ? "Hide Nutrition Targets"
                   : "🎯 View Nutrition Targets"}
               </button>
+              <button onClick={() => setShowLogs(!showLogs)}>
+                {showLogs ? "Hide Logs" : "🥗 Consumption Logs"}
+              </button>
               <button
                 onClick={async () => {
                   const success = await resetHiddenReminders(currentUser);
@@ -185,13 +189,16 @@ function App() {
               />
             )}
 
-            {showGoals && (
+            {showGoals &&  (
               <NutritionDisplay
                 currentUser={currentUser}
                 onClose={() => setShowGoals(false)}
               />
             )}
-            {!showProfileForm && !showGoals && (
+
+            {showLogs && <LogList currentUser={currentUser} />}
+
+            {!showProfileForm && !showGoals && !showLogs && (
               <div>
                 <div>
                   <ToastContainer
@@ -203,8 +210,6 @@ function App() {
                     }}
                   />
                 </div>
-                <LogList currentUser={currentUser} />
-                <FoodItemList />
                 <GroceryList currentUser={currentUser} />
                 <Inventory
                   currentUser={currentUser}

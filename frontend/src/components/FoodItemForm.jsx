@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 export default function FoodItemForm({ handleItemAdded }) {
   const [foodItem, setFoodItem] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSearch = (e) => {
     e.preventDefault();
     if (foodItem === "") {
       toast.error("Please fill out all fields.");
@@ -43,7 +43,7 @@ export default function FoodItemForm({ handleItemAdded }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <div>
       <div>
         <h1>Add New Food Item</h1>
 
@@ -57,10 +57,12 @@ export default function FoodItemForm({ handleItemAdded }) {
             />
           </div>
           <div>
-            <button type="submit">Submit</button>
+            <button type="submit" onClick={handleSearch}>
+              Submit
+            </button>
           </div>
         </div>
       </div>
-    </form>
+    </div>
   );
 }

@@ -144,8 +144,10 @@ export default function GroceryRecForm({ currentUser }) {
 
   return (
     <div>
-      <h1>Grocery List Generator</h1>
-      <p>Get personalized grocery recommendations</p>
+      <h1 className="mb-1">Grocery List Generator</h1>
+      <p className="text-lg text-gray-600 mb-2">
+        Get personalized grocery recommendations
+      </p>
       <div>
         <label>Budget: $</label>
         <input
@@ -155,6 +157,7 @@ export default function GroceryRecForm({ currentUser }) {
           onChange={handleChange}
           min="1"
           required
+          className="mb-1"
         ></input>
       </div>
       <div>
@@ -163,6 +166,7 @@ export default function GroceryRecForm({ currentUser }) {
           name="allowRepeats"
           checked={form.allowRepeats}
           onChange={handleChange}
+          className="mb-2"
         />
         <label>Allow repeat meals</label>
       </div>
@@ -175,6 +179,7 @@ export default function GroceryRecForm({ currentUser }) {
           onChange={handleChange}
           min="1"
           max="10"
+          className="mb-2"
         ></input>
       </div>
 
@@ -191,7 +196,7 @@ export default function GroceryRecForm({ currentUser }) {
       )}
 
       <div className="mb-1 w-full max-w-sm">
-        <button id="generateBtn" type="submit" onClick={handleSubmit}>
+        <button className="!bg-emerald-50" id="generateBtn" type="submit" onClick={handleSubmit}>
           Generate Grocery List
         </button>
       </div>

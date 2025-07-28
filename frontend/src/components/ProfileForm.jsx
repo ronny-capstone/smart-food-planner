@@ -130,11 +130,11 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div>
+      <div className="m-2">
         {isUpdating ? <h1> Update Profile</h1> : <h1> Create Profile</h1>}
 
-        <div>
-          <p> Height</p>
+        <div className="m-2">
+          <p className="text-lg text-gray-600"> Height</p>
           <input
             type="text"
             value={heightFeet}
@@ -149,8 +149,8 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           />
         </div>
 
-        <div>
-          <p>Weight</p>
+        <div className="m-2">
+          <p className="text-lg text-gray-600"> Weight</p>
           <input
             type="text"
             value={weightKg}
@@ -159,8 +159,8 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           />
         </div>
 
-        <div>
-          <p>Age</p>
+        <div className="m-2">
+          <p className="text-lg text-gray-600"> Age</p>
           <input
             type="text"
             value={age}
@@ -169,8 +169,8 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           />
         </div>
 
-        <div>
-          <p>Gender</p>
+        <div className="m-2">
+          <p className="text-lg text-gray-600"> Gender</p>
           <select
             name="gender"
             value={gender}
@@ -183,8 +183,8 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           </select>
         </div>
 
-        <div>
-          <p>Activity Level</p>
+        <div className="m-3">
+          <p className="text-lg text-gray-600"> Activity Level</p>
           <select
             name="activityLevel"
             value={activityLevel}
@@ -204,8 +204,8 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           </select>
         </div>
 
-        <div>
-          <p>Dietary Preferences</p>
+        <div className="m-2">
+          <p className="text-lg text-gray-600"> Dietary Preferences</p>
           <select
             name="dietaryPreference"
             value={dietaryPreferences}
@@ -220,8 +220,8 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           </select>
         </div>
 
-        <div>
-          <p>Health Goal</p>
+        <div className="m-2">
+          <p className="text-lg text-gray-600"> Health Goal</p>
 
           <select
             name="healthGoal"
@@ -237,11 +237,20 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
 
         <div className="mb-1 w-full max-w-sm">
           {isUpdating ? (
-            <button id="editBtn" type="submit" onClick={handleSubmit}>
+            <button
+              className="!bg-emerald-50"
+              id="editBtn"
+              type="submit"
+              onClick={handleSubmit}
+            >
               Update Profile
             </button>
           ) : (
-            <button type="submit" onClick={handleSubmit}>
+            <button
+              className="!bg-emerald-50"
+              type="submit"
+              onClick={handleSubmit}
+            >
               Create Profile
             </button>
           )}
