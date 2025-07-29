@@ -4,6 +4,7 @@ import { RECIPES_PATH, PROFILE_PATH, WEEK_PATH } from "../utils/paths";
 import { cuisinesList } from "../utils/mealFilters";
 import { capitalize } from "../utils/stringUtils";
 import { toast } from "react-toastify";
+import { mealDayColor } from "../utils/dateUtils";
 
 export default function MealRecForm({ currentUser }) {
   const [form, setForm] = useState({
@@ -175,7 +176,7 @@ export default function MealRecForm({ currentUser }) {
         params.append(key, value);
       }
     });
-    setForm((prev) => ({ ...prev, isLoading: true, noResults: false }));
+    setForm((prev) => ({ ...prev, isSearching: true, noResults: false }));
     try {
       fetch(
         `${API_BASE_URL}${RECIPES_PATH}${WEEK_PATH}/${currentUser}?${params}`,
@@ -188,9 +189,9 @@ export default function MealRecForm({ currentUser }) {
       )
         .then((response) => response.json())
         .then((data) => {
-          setWeeklyPlan(data);
           setForm((prev) => ({
             ...prev,
+            weeklyPlan: data,
             recipes: data.recipes || [],
             result: {
               type: "recommendations",
@@ -199,7 +200,7 @@ export default function MealRecForm({ currentUser }) {
               ingredientType: data.ingredientType,
             },
             noResults: !data.weeklyPlan || data.weeklyPlan.length === 0,
-            isLoading: false,
+            isSearching: false,
           }));
           toast.success("Weekly meal plan generated!");
         });
@@ -207,7 +208,7 @@ export default function MealRecForm({ currentUser }) {
       toast.error("Failed to generate weekly meal plan");
       setForm((prev) => ({
         ...prev,
-        isLoading: false,
+        isSearching: false,
         noResults: true,
       }));
     }
@@ -218,30 +219,32 @@ export default function MealRecForm({ currentUser }) {
       <h1 className="mb-2">Meal Recommendation</h1>
       <div>
         <div>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="planType"
-              value="weekly"
-              checked={form.type === "weekly"}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, type: e.target.value }))
-              }
-            />
-            Weekly Meal Plan
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="planType"
-              value="singular"
-              checked={form.type === "singular"}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, type: e.target.value }))
-              }
-            />
-            Singular Meal
-          </label>
+          <div className="flex justify-center space-x-4">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="planType"
+                value="weekly"
+                checked={form.type === "weekly"}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, type: e.target.value }))
+                }
+              />
+              Weekly Meal Plan
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="planType"
+                value="singular"
+                checked={form.type === "singular"}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, type: e.target.value }))
+                }
+              />
+              Singular Meal
+            </label>
+          </div>
           <label>Meal Prioritization:</label>
           <select
             name="selectedPriority"
@@ -545,21 +548,26 @@ export default function MealRecForm({ currentUser }) {
           <div>
             {form.weeklyPlan.weeklyPlan.map((day) => (
               <div key={day.day}>
-                <p>
+                <p className="text-2xl">
                   Day {day.day} - {day.dayName}{" "}
                 </p>
                 {["breakfast", "lunch", "dinner"].map((mealType) => (
                   <div key={mealType}>
-                    <p>{mealType}</p>
+                    {mealDayColor(day.day, mealType)}
                     {day.meals[mealType] ? (
                       <div>
-                        <img
-                          src={day.meals[mealType].image}
-                          alt={day.meals[mealType].title}
-                        />
-                        <p>{day.meals[mealType].title}</p>
-                        <p>{day.meals[mealType].readyInMinutes} min</p>
+                        <p className="text-lg">{day.meals[mealType].title}</p>
+                        <p>
+                          Prep time: {day.meals[mealType].readyInMinutes} min
+                        </p>
                         <p>Match: {day.meals[mealType].totalScore}%</p>
+                        <div className="flex justify-center space-x-4 ">
+                          <img
+                            className="w-auto h-64 object-cover m-2"
+                            src={day.meals[mealType].image}
+                            alt={day.meals[mealType].title}
+                          />
+                        </div>
                       </div>
                     ) : (
                       <div>

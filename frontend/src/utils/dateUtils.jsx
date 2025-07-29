@@ -33,3 +33,24 @@ export const formatDay = (days) => {
   const dayString = days === 1 ? "day" : "days";
   return `${Math.abs(days)} ${dayString}`;
 };
+
+import { capitalize } from "./stringUtils";
+export const mealDayColor = (dayNum, mealType) => {
+  console.log(dayNum, mealType);
+  if (dayNum === 1) {
+    return <p className="text-xl text-red-500">{capitalize(mealType)}</p>;
+  }
+  if (dayNum === 2) {
+    <p className="text-xl text-orange-500">{capitalize(mealType)}</p>;
+  } else if (dayNum === 3) {
+    <p className="text-xl text-yellow-500">{capitalize(mealType)}</p>;
+  } else if (dayNum === 4) {
+    <p className="text-xl text-green-500">{capitalize(mealType)}</p>;
+  } else if (dayNum === 5) {
+    <p className="text-xl text-sky-500">{capitalize(mealType)}</p>;
+  } else if (dayNum === 6) {
+    <p className="text-xl text-indigo-500">{capitalize(mealType)}</p>;
+  } else if (dayNum === 7) {
+    <p className="text-xl text-purple-500">{capitalize(mealType)}</p>;
+  }
+};
