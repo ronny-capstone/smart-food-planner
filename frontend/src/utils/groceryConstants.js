@@ -16,3 +16,13 @@ export const types = {
     text: "👩‍🍳 Make rich & complex recipes!",
   },
 };
+
+export const NO_NUTRIENT_FOUND = 0;
+
+export const NUTRIENT_NAMES = {
+  CALORIES: "Calories",
+  PROTEIN: "Protein",
+  CARBS: "Net Carbohydrates",
+  FATS: "Fat",
+  SUGAR: "Sugar",
+};
