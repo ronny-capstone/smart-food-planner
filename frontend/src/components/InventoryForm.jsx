@@ -3,6 +3,11 @@ import { API_BASE_URL } from "../utils/api";
 import { INVENTORY_PATH, FOOD_PATH } from "../utils/paths";
 import { toast } from "react-toastify";
 import FoodItemForm from "./FoodItemForm";
+import {
+  NO_NUTRIENT_FOUND,
+  NUTRIENT_NAMES,
+  TYPES,
+} from "../utils/groceryConstants";
 
 export default function InventoryForm({
   handleGroceryAdded,
@@ -37,7 +42,7 @@ export default function InventoryForm({
 
   // Update expiration estimate when food item changes
   useEffect(() => {
-    if (type === "update" && groceryToUpdate) {
+    if (type === TYPES.UPDATE && groceryToUpdate) {
       setFoodItem(groceryToUpdate.item_id.toString());
       setQuantity(groceryToUpdate.quantity.toString());
       setExpirationDate(groceryToUpdate.expiration_date);
@@ -46,7 +51,7 @@ export default function InventoryForm({
 
   const handleFoodItemChange = (e) => {
     const value = e.target.value;
-    if (value === "add") {
+    if (value === TYPES.ADD) {
       setShowFoodItemForm(true);
     } else {
       setFoodItem(value);
@@ -61,7 +66,7 @@ export default function InventoryForm({
 
   const getNutrient = (nutrients, name) => {
     const nutrient = nutrients.find((n) => n.name === name);
-    return nutrient ? nutrient.amount : 0;
+    return nutrient ? nutrient.amount : NO_NUTRIENT_FOUND;
   };
 
   const handleSelectSearchResult = async (selectedItem) => {
@@ -80,11 +85,17 @@ export default function InventoryForm({
           const newFoodItem = {
             spoonacular_id: data.id,
             name: data.name,
-            calories: getNutrient(data.nutrition.nutrients, "Calories"),
-            protein: getNutrient(data.nutrition.nutrients, "Protein"),
-            carbs: getNutrient(data.nutrition.nutrients, "Net Carbohydrates"),
-            fats: getNutrient(data.nutrition.nutrients, "Fat"),
-            sugars: getNutrient(data.nutrition.nutrients, "Sugar"),
+            calories: getNutrient(
+              data.nutrition.nutrients,
+              NUTRIENT_NAMES.CALORIES
+            ),
+            protein: getNutrient(
+              data.nutrition.nutrients,
+              NUTRIENT_NAMES.PROTEIN
+            ),
+            carbs: getNutrient(data.nutrition.nutrients, NUTRIENT_NAMES.CARBS),
+            fats: getNutrient(data.nutrition.nutrients, NUTRIENT_NAMES.FATS),
+            sugars: getNutrient(data.nutrition.nutrients, NUTRIENT_NAMES.SUGAR),
           };
 
           // Try to add to database with duplicate handling
@@ -213,9 +224,9 @@ export default function InventoryForm({
       toast.error("Please select a food item and enter a positive quantity.");
       return;
     }
-    if (type === "add") {
+    if (type === TYPES.ADD) {
       addGrocery();
-    } else if (type === "update") {
+    } else if (type === TYPES.UPDATE) {
       updateGrocery();
     }
   };
@@ -223,12 +234,12 @@ export default function InventoryForm({
   return (
     <form onSubmit={handleSubmit}>
       <div className="bg-white rounded-xl">
-        {type === "add" && (
+        {type === TYPES.ADD && (
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Add to Inventory
           </h1>
         )}
-        {type === "update" && (
+        {type === TYPES.UPDATE && (
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Update Food Item
           </h1>
@@ -244,12 +255,12 @@ export default function InventoryForm({
             <>
               <select
                 name="foodItem"
-                value={showFoodItemForm ? "add" : foodItem}
+                value={showFoodItemForm ? TYPES.ADD : foodItem}
                 onChange={handleFoodItemChange}
                 className="py-2 border border-gray-300 rounded-lg ml-2"
               >
                 <option value="">Select a food item</option>
-                <option value="add">+ Add new food item</option>
+                <option value={TYPES.ADD}>+ Add new food item</option>
                 {foodItems
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((item) => (
@@ -315,7 +326,7 @@ export default function InventoryForm({
             className="!bg-emerald-50"
             disabled={showFoodItemForm}
           >
-            {type === "add" ? "Add to inventory" : "Update item"}
+            {type === TYPES.ADD ? "Add to inventory" : "Update item"}
           </button>
         </div>
       </div>

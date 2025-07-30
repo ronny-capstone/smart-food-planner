@@ -15,6 +15,7 @@ const {
   NUTRIENT_CONSTANTS,
   MACRO_CONSTANTS,
   PREP_BUCKETS,
+  WEEK,
 } = require("../utils/recipeConstants.js");
 const { isNameMatch } = require("../utils/stringUtils.js");
 const {
@@ -181,8 +182,6 @@ const recipeRecommendation = async (
 
 const generateWeekMealPlan = async (userFilters, userProfile, inventory) => {
   try {
-    console.log(`Starting generatemealplan`);
-    console.log(`User filters: ${userFilters}`);
     const masterRecipeResult = await recipeRecommendation(
       userFilters.ingredientType || "partial",
       userFilters,
@@ -202,16 +201,11 @@ const generateWeekMealPlan = async (userFilters, userProfile, inventory) => {
     }
 
     const allRecipes = masterRecipeResult.recipes;
-    console.log(`Generated ${allRecipes.length} total recipes`);
 
     // Ensure each meal type has 7 recipes
     const breakfastRecipes = filterRecipesByMealType(allRecipes, "breakfast");
     const lunchRecipes = filterRecipesByMealType(allRecipes, "lunch");
     const dinnerRecipes = filterRecipesByMealType(allRecipes, "dinner");
-
-    console.log(`- Breakfast: ${breakfastRecipes.length} recipes found`);
-    console.log(`- Lunch: ${lunchRecipes.length} recipes found`);
-    console.log(`- Dinner: ${dinnerRecipes.length} recipes found`);
 
     // Shuffle recipes according to Fisher-Yates
     const shuffledBreakfast = shuffleArray(breakfastRecipes);
@@ -219,14 +213,14 @@ const generateWeekMealPlan = async (userFilters, userProfile, inventory) => {
     const shuffledDinner = shuffleArray(dinnerRecipes);
 
     // If we don't have 7 unique recipes, copy until we have 7
-    const breakfastWeek = copyArray(shuffledBreakfast, 7);
-    const lunchWeek = copyArray(shuffledLunch, 7);
-    const dinnerWeek = copyArray(shuffledDinner, 7);
+    const breakfastWeek = copyArray(shuffledBreakfast, WEEK);
+    const lunchWeek = copyArray(shuffledLunch, WEEK);
+    const dinnerWeek = copyArray(shuffledDinner, WEEK);
 
     // Create weekly meal plan by cycling through each group
     const weeklyPlan = [];
 
-    for (let day = 0; day < 7; day++) {
+    for (let day = 0; day < WEEK; day++) {
       const dailyPlan = {
         day: day + 1,
         dayName: dayNames[day],
@@ -242,7 +236,7 @@ const generateWeekMealPlan = async (userFilters, userProfile, inventory) => {
         dailyPlan.meals.lunch &&
         dailyPlan.meals.dinner &&
         dailyPlan.meals.lunch.id === dailyPlan.meals.dinner.id &&
-        day < 6
+        day < WEEK - 1
       ) {
         [
           dinnerWeek[day],
@@ -252,7 +246,6 @@ const generateWeekMealPlan = async (userFilters, userProfile, inventory) => {
       }
       weeklyPlan.push(dailyPlan);
     }
-    console.log(`Generated weekly plan with ${weeklyPlan.length} days`);
     return {
       weeklyPlan,
       numFound: weeklyPlan.length,

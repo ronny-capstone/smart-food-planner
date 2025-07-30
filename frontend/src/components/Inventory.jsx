@@ -6,6 +6,7 @@ import { getDaysUntilExpiration } from "../utils/dateUtils";
 import { API_BASE_URL } from "../utils/api";
 import { INVENTORY_PATH } from "../utils/paths";
 import { toast } from "react-toastify";
+import { TYPES } from "../utils/groceryConstants";
 
 export default function Inventory({ currentUser, inventory, setInventory }) {
   const [activeModal, setActiveModal] = useState(false);
@@ -58,12 +59,12 @@ export default function Inventory({ currentUser, inventory, setInventory }) {
   };
 
   const openAddModal = () => {
-    setActiveModal("add");
+    setActiveModal(TYPES.ADD);
     setGroceryToUpdate(null);
   };
 
   const openUpdateModal = (grocery) => {
-    setActiveModal("update");
+    setActiveModal(TYPES.UPDATE);
     setGroceryToUpdate(grocery);
   };
 
@@ -79,17 +80,17 @@ export default function Inventory({ currentUser, inventory, setInventory }) {
 
   return (
     <div>
-      <h1> Inventory </h1>
-      <button className = "!bg-emerald-50" onClick={openAddModal}>Add Food Item</button>
+      <h1>Inventory</h1>
+      <button className="!bg-emerald-50" onClick={openAddModal}>Add Food Item</button>
 
       {/* Add Modal */}
-      {activeModal === "add" && (
+      {activeModal === TYPES.ADD && (
         <LogModal onClose={closeModal}>
           <InventoryForm
             handleGroceryAdded={handleGroceryAdded}
             handleGroceryUpdated={handleGroceryUpdated}
             setShowModal={closeModal}
-            type="add"
+            type={TYPES.ADD}
             groceryToUpdate={null}
             currentUser={currentUser}
           />
@@ -113,13 +114,13 @@ export default function Inventory({ currentUser, inventory, setInventory }) {
         })}
 
         {/* Update Modal */}
-        {groceryToUpdate && activeModal === "update" && (
+        {groceryToUpdate && activeModal === TYPES.UPDATE && (
           <LogModal onClose={closeModal}>
             <InventoryForm
               handleGroceryAdded={handleGroceryAdded}
               handleGroceryUpdated={handleGroceryUpdated}
               setShowModal={closeModal}
-              type="update"
+              type={TYPES.UPDATE}
               groceryToUpdate={groceryToUpdate}
               currentUser={currentUser}
             />

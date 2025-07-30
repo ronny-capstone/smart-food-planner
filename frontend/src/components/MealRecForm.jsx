@@ -9,6 +9,11 @@ import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
 
 export default function MealRecForm({ currentUser }) {
+  const TYPES = {
+    SINGULAR: "singular",
+    WEEKLY: "weekly",
+  };
+
   const [form, setForm] = useState({
     recipes: [],
     result: null,
@@ -29,7 +34,7 @@ export default function MealRecForm({ currentUser }) {
     maxCalories: 0,
     minFat: 0,
     maxFat: 0,
-    type: "singular",
+    type: TYPES.SINGULAR,
     weeklyPlan: "",
   });
 
@@ -240,8 +245,8 @@ export default function MealRecForm({ currentUser }) {
               <input
                 type="radio"
                 name="planType"
-                value="singular"
-                checked={form.type === "singular"}
+                value={TYPES.SINGULAR}
+                checked={form.type === TYPES.SINGULAR}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, type: e.target.value }))
                 }
@@ -252,8 +257,8 @@ export default function MealRecForm({ currentUser }) {
               <input
                 type="radio"
                 name="planType"
-                value="weekly"
-                checked={form.type === "weekly"}
+                value={TYPES.WEEKLY}
+                checked={form.type === TYPES.WEEKLY}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, type: e.target.value }))
                 }
@@ -462,7 +467,7 @@ export default function MealRecForm({ currentUser }) {
         </div>
 
         <div className="mb-1 w-full max-w-sm">
-          {form.type === "singular" ? (
+          {form.type === TYPES.SINGULAR ? (
             <button
               className="!bg-emerald-50"
               id="generateBtn"
@@ -639,7 +644,7 @@ export default function MealRecForm({ currentUser }) {
         {form.isSearching && (
           <div className="flex flex-col items-center justify-center py-6 space-y-3">
             <p className="text-lg font-medium text-gray-700">
-              {form.type === "weekly"
+              {form.type === TYPES.WEEKLY
                 ? "Generating Week of Recipes..."
                 : "Generating Meal Recommendation..."}
             </p>

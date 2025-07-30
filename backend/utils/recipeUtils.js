@@ -19,29 +19,6 @@ const dietMatch = (recipe, userDiet) => {
 };
 
 const filterRecipesByMealType = (recipes, mealType) => {
-  //   // Try to filter by actual dish types if exist
-
-  //   const recipesWithDishTypes = recipes.filter(
-  //     (recipe) => recipe.dishTypes && recipe.dishTypes.length > 0
-  //   );
-
-  //   if (recipesWithDishTypes.length > 0) {
-  //     const filtered = recipesWithDishTypes.filter((recipe) =>
-  //       recipe.dishTypes.some((dishType) =>
-  //         dishType.toLowerCase().includes(mealType.toLowerCase())
-  //       )
-  //     );
-
-  //     // If found recipes with matching dish types, return them
-  //     if (filtered.length > 0) {
-  //       return filtered;
-  //     }
-  //   }
-  //   // For recipes without dish types, treat them as lunch/dinner
-  //   const recipesWithoutTypes = recipes.filter(
-  //     (recipe) => !recipe.dishTypes || recipe.dishTypes.length === 0
-  //   );
-
   if (mealType === "breakfast") {
     // Only return recipes that explicitly have breakfast dish types
     return recipes.filter(
