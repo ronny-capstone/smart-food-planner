@@ -5,6 +5,8 @@ import { cuisinesList } from "../utils/mealFilters";
 import { capitalize } from "../utils/stringUtils";
 import { toast } from "react-toastify";
 import { mealDayColor } from "../utils/dateUtils";
+import { useKeenSlider } from "keen-slider/react";
+import "keen-slider/keen-slider.min.css";
 
 export default function MealRecForm({ currentUser }) {
   const [form, setForm] = useState({
@@ -30,6 +32,19 @@ export default function MealRecForm({ currentUser }) {
     type: "singular",
     weeklyPlan: "",
   });
+
+  const [sliderRef, instanceRef] = useKeenSlider({
+    slides: { perView: 1, spacing: 16 },
+    loop: true,
+  });
+
+  const prev = () => {
+    instanceRef.current?.prev();
+  };
+
+  const next = () => {
+    instanceRef.current?.next();
+  };
 
   // Fetch user's diet from profile
   useEffect(() => {
@@ -63,6 +78,7 @@ export default function MealRecForm({ currentUser }) {
       recipes: [],
       result: null,
       noResults: false,
+      weeklyPlan: [],
     }));
   };
 
@@ -224,18 +240,6 @@ export default function MealRecForm({ currentUser }) {
               <input
                 type="radio"
                 name="planType"
-                value="weekly"
-                checked={form.type === "weekly"}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, type: e.target.value }))
-                }
-              />
-              Weekly Meal Plan
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                name="planType"
                 value="singular"
                 checked={form.type === "singular"}
                 onChange={(e) =>
@@ -243,6 +247,18 @@ export default function MealRecForm({ currentUser }) {
                 }
               />
               Singular Meal
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="planType"
+                value="weekly"
+                checked={form.type === "weekly"}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, type: e.target.value }))
+                }
+              />
+              Weekly Meal Plan
             </label>
           </div>
           <label>Meal Prioritization:</label>
@@ -437,11 +453,12 @@ export default function MealRecForm({ currentUser }) {
             </button>
           </div>
 
-          {form.recipes && form.recipes.length > 0 && (
-            <button type="button" onClick={clearResults}>
-              Clear Results
-            </button>
-          )}
+          {(form.recipes && form.recipes.length > 0) ||
+            (form.weeklyPlan && form.weeklyPlan.weeklyPlan && (
+              <button type="button" onClick={clearResults}>
+                Clear Results
+              </button>
+            ))}
         </div>
 
         <div className="mb-1 w-full max-w-sm">
@@ -468,7 +485,6 @@ export default function MealRecForm({ currentUser }) {
 
         {form.result && !form.isSearching && (
           <div>
-            <p>{form.result.message}</p>
             {form.result.type === "exact" && (
               <p>Using {form.result.itemsUsed} items from your inventory</p>
             )}
@@ -494,60 +510,85 @@ export default function MealRecForm({ currentUser }) {
 
         {form.recipes && form.recipes.length > 0 && !form.isSearching && (
           <div>
-            <h2> Recipe Recommendations ({form.recipes.length}) </h2>
-            {form.recipes.map((recipe) => (
-              <div key={recipe.id}>
-                <img src={recipe.image} alt={recipe.title} />
-                <p> {recipe.title} </p>
-                <p>Match Score: {recipe.totalScore}% match</p>
-                <p>Prep time: {recipe.readyInMinutes} minutes</p>
-                {recipe.cuisines.length !== 0 && (
-                  <p>Cuisines: {recipe.cuisines.join(", ")}</p>
-                )}
-                <p>
-                  {recipe.usedIngredients.length || 0} ingredients used from
-                  inventory
-                </p>
-                <p>
-                  {recipe.missedIngredients.length > 0 && (
-                    <>
-                      {" "}
-                      {recipe.missedIngredients.length} missing (
-                      {recipe.missedIngredients
-                        .map((ing) => ing.name)
-                        .join(", ")}
-                      )
-                    </>
+            <h2 className="text-lg">
+              {" "}
+              Recipe Recommendations ({form.recipes.length}){" "}
+            </h2>
+            <div ref={sliderRef} className="keen-slider">
+              {form.recipes.map((recipe) => (
+                <div key={recipe.id} className="keen-slider__slide">
+                  <div className="flex justify-center space-x-4 ">
+                    <img
+                      src={recipe.image}
+                      alt={recipe.title}
+                      className="w-auto h-64 object-cover m-2 rounded-md"
+                    />
+                  </div>
+                  <p> {recipe.title} </p>
+                  <p>Match Score: {recipe.totalScore}% match</p>
+                  <p>Prep time: {recipe.readyInMinutes} minutes</p>
+                  {recipe.cuisines.length !== 0 && (
+                    <p>Cuisines: {recipe.cuisines.join(", ")}</p>
                   )}
-                </p>
+                  <p>
+                    {recipe.usedIngredients.length || 0} ingredients used from
+                    inventory
+                  </p>
+                  <p>
+                    {recipe.missedIngredients.length > 0 && (
+                      <>
+                        {" "}
+                        {recipe.missedIngredients.length} missing (
+                        {recipe.missedIngredients
+                          .map((ing) => ing.name)
+                          .join(", ")}
+                        )
+                      </>
+                    )}
+                  </p>
 
-                {recipe.usedExpiringIngredients &&
-                  form.prioritizeExpiring &&
-                  recipe.usedExpiringIngredients.length > 0 && (
-                    <>
-                      <p>
-                        Uses {recipe.usedExpiringIngredients.length} expiring
-                        items:
-                      </p>
-                      <ul>
-                        {recipe.usedExpiringIngredients.map((item, index) => (
-                          <li key={index}>
-                            {capitalize(item.name)} - expires in{" "}
-                            {item.daysUntilExpire} days
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-              </div>
-            ))}
+                  {recipe.usedExpiringIngredients &&
+                    form.prioritizeExpiring &&
+                    recipe.usedExpiringIngredients.length > 0 && (
+                      <>
+                        <p>
+                          Uses {recipe.usedExpiringIngredients.length} expiring
+                          items:
+                        </p>
+                        <ul>
+                          {recipe.usedExpiringIngredients.map((item, index) => (
+                            <li key={index}>
+                              {capitalize(item.name)} - expires in{" "}
+                              {item.daysUntilExpire} days
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                </div>
+              ))}
+              <button
+                onClick={prev}
+                className="absolute left-0 top-1/2  bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow"
+                aria-label="Previous"
+              >
+                ←
+              </button>
+              <button
+                onClick={next}
+                className="absolute right-0 top-1/2 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow"
+                aria-label="Next"
+              >
+                →
+              </button>
+            </div>
           </div>
         )}
 
         {form.weeklyPlan && form.weeklyPlan.weeklyPlan && (
-          <div>
+          <div ref={sliderRef} className="keen-slider">
             {form.weeklyPlan.weeklyPlan.map((day) => (
-              <div key={day.day}>
+              <div key={day.day} className="keen-slider__slide">
                 <p className="text-2xl">
                   Day {day.day} - {day.dayName}{" "}
                 </p>
@@ -563,7 +604,7 @@ export default function MealRecForm({ currentUser }) {
                         <p>Match: {day.meals[mealType].totalScore}%</p>
                         <div className="flex justify-center space-x-4 ">
                           <img
-                            className="w-auto h-64 object-cover m-2"
+                            className="w-auto h-64 object-cover m-2 rounded-md"
                             src={day.meals[mealType].image}
                             alt={day.meals[mealType].title}
                           />
@@ -578,6 +619,20 @@ export default function MealRecForm({ currentUser }) {
                 ))}
               </div>
             ))}
+            <button
+              onClick={prev}
+              className="absolute left-0 top-1/2  bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow"
+              aria-label="Previous"
+            >
+              ←
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-0 top-1/2 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow"
+              aria-label="Next"
+            >
+              →
+            </button>
           </div>
         )}
 
