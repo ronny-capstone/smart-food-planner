@@ -80,8 +80,10 @@ export default function Inventory({ currentUser, inventory, setInventory }) {
 
   return (
     <div>
-      <h1>Inventory</h1>
-      <button className="!bg-emerald-50" onClick={openAddModal}>Add Food Item</button>
+      <h1 className="font-semibold">Inventory</h1>
+      <button className="!bg-emerald-50" onClick={openAddModal}>
+        Add Food Item
+      </button>
 
       {/* Add Modal */}
       {activeModal === TYPES.ADD && (
@@ -125,43 +127,6 @@ export default function Inventory({ currentUser, inventory, setInventory }) {
               currentUser={currentUser}
             />
           </LogModal>
-        )}
-
-        {/* Statistics, only shows if there are groceries in inventory */}
-        {inventory.length > 0 && (
-          <div>
-            <h3>Quick Overview:</h3>
-            <p>Total items: {inventory.length}</p>
-            <p>
-              {/* Count items expiring soon (<=3 days remaining) */}
-              Expiring soon:
-              {
-                inventory.filter(
-                  (g) =>
-                    getDaysUntilExpiration(g.expiration_date) <= 3 &&
-                    getDaysUntilExpiration(g.expiration_date) >= 0
-                ).length
-              }
-            </p>
-            <p>
-              {/* Count expired items (<0 days remaining) */}
-              Expired:
-              {
-                inventory.filter(
-                  (g) => getDaysUntilExpiration(g.expiration_date) < 0
-                ).length
-              }
-            </p>
-            {/* Count fresh items (>7 days remaining) */}
-            <p>
-              Fresh items:
-              {
-                inventory.filter(
-                  (g) => getDaysUntilExpiration(g.expiration_date) > 7
-                ).length
-              }
-            </p>
-          </div>
         )}
       </div>
     </div>

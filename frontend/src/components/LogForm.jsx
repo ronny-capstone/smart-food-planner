@@ -146,6 +146,7 @@ export default function LogForm({
             type="date"
             value={dateLogged}
             onChange={(e) => setDateLogged(e.target.value)}
+            className="ml-2 mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
         <div>
@@ -154,6 +155,7 @@ export default function LogForm({
             name="foodItem"
             value={foodItem}
             onChange={(e) => setFoodItem(e.target.value)}
+            className="ml-2 mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value=""> Select a food item </option>
             {foodItems.map((item) => (
@@ -169,6 +171,7 @@ export default function LogForm({
             name="servings"
             value={servings}
             onChange={(e) => setServings(e.target.value)}
+            className="ml-2 mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
         <div>

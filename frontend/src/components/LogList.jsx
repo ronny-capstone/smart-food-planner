@@ -126,7 +126,7 @@ export default function LogList({ currentUser }) {
 
   return (
     <div>
-      <h1 className="mb-2 mt-2">Food Logs</h1>
+      <h1 className="font-semibold  mb-2 mt-2">Food Logs</h1>
       <p className="text-gray-600">
         {filteredLogs.length} of {logs.length} total entries{" "}
         {selectedDate && `for ${selectedDate.toLocaleDateString()}`}

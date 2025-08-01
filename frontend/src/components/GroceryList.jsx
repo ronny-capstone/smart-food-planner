@@ -102,8 +102,10 @@ export default function GroceryList({ currentUser }) {
 
   return (
     <div>
-      <h1> Grocery List </h1>
-      <button onClick={openAddModal}>Add Grocery Item</button>
+      <h1 className="font-semibold "> Grocery List </h1>
+      <button className="!bg-emerald-50" onClick={openAddModal}>
+        Add Grocery Item
+      </button>
 
       {/* Add Modal */}
       {activeModal === TYPES.ADD && (

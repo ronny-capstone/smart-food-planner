@@ -237,7 +237,7 @@ export default function MealRecForm({ currentUser }) {
 
   return (
     <div>
-      <h1 className="mb-2">Meal Recommendation</h1>
+      <h1 className="font-semibold mb-2">Meal Recommendation</h1>
       <div>
         <div>
           <div className="flex justify-center space-x-4">

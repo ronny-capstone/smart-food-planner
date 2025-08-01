@@ -188,7 +188,7 @@ export default function NutritionDisplay({ currentUser }) {
           "--toastify-color-progress-light": "#808080",
         }}
       />
-      <h1>Nutritional Targets</h1>
+      <h1 className="font-semibold ">Nutritional Targets</h1>
 
       <h3 className="text-2xl font-medium underline text-gray-700 pt-2 pb-2">
         Daily Values:
