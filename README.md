@@ -1,5 +1,6 @@
-# smart-fridge-planner
+# Smart Food Planner
 
-This app helps users track the food items in their pantry and fridge, including expiration dates, and suggests recipes based on the ingredients they have on hand.
+Smart Food Tracker solves three major kitchen problems: prevents food waste through inventory tracking, eliminates meal planning stress with smart recommendations, and automates nutrition tracking toward your health goals.
 
-https://docs.google.com/document/d/1PrUDVMQI-EiUrjnD0Qdb56KzuAPhRmpShF0n5u0a0zA/edit?tab=t.0#heading=h.wyvmwp6k2uz
+### Demo
+https://drive.google.com/file/d/1i7twkBc6Yz0ZhSgFAjUyoV9MZD6_NB05/view?usp=sharing
