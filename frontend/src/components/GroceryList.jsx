@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../utils/api";
 import { GROCERY_PATH } from "../utils/paths";
 import { toast } from "react-toastify";
+import { TYPES } from "../utils/groceryConstants";
 
 export default function GroceryList({ currentUser }) {
   const [groceries, setGroceries] = useState([]);
@@ -85,12 +86,12 @@ export default function GroceryList({ currentUser }) {
   };
 
   const openAddModal = () => {
-    setActiveModal("add");
+    setActiveModal(TYPES.ADD);
     setGroceryToUpdate(null);
   };
 
   const openUpdateModal = (grocery) => {
-    setActiveModal("update");
+    setActiveModal(TYPES.UPDATE);
     setGroceryToUpdate(grocery);
   };
 
@@ -105,13 +106,13 @@ export default function GroceryList({ currentUser }) {
       <button onClick={openAddModal}>Add Grocery Item</button>
 
       {/* Add Modal */}
-      {activeModal === "add" && (
+      {activeModal === TYPES.ADD && (
         <LogModal onClose={closeModal}>
           <GroceryForm
             handleGroceryAdded={handleGroceryAdded}
             handleGroceryUpdated={handleGroceryUpdated}
             setShowModal={closeModal}
-            type="add"
+            type={TYPES.ADD}
             groceryToUpdate={null}
             currentUser={currentUser}
           />
@@ -135,13 +136,13 @@ export default function GroceryList({ currentUser }) {
         })}
 
         {/* Update Modal */}
-        {groceryToUpdate && activeModal === "update" && (
+        {groceryToUpdate && activeModal === TYPES.UPDATE && (
           <LogModal onClose={closeModal}>
             <GroceryForm
               handleGroceryAdded={handleGroceryAdded}
               handleGroceryUpdated={handleGroceryUpdated}
               setShowModal={closeModal}
-              type="update"
+              type={TYPES.UPDATE}
               groceryToUpdate={groceryToUpdate}
               currentUser={currentUser}
             />

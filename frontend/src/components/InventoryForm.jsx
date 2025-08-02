@@ -260,7 +260,7 @@ export default function InventoryForm({
                 className="py-2 border border-gray-300 rounded-lg ml-2"
               >
                 <option value="">Select a food item</option>
-                <option value="add">+ Add new food item</option>
+                <option value={TYPES.ADD}>+ Add new food item</option>
                 {foodItems
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((item) => (

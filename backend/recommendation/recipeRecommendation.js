@@ -15,8 +15,17 @@ const {
   NUTRIENT_CONSTANTS,
   MACRO_CONSTANTS,
   PREP_BUCKETS,
+  WEEK,
 } = require("../utils/recipeConstants.js");
 const { isNameMatch } = require("../utils/stringUtils.js");
+const {
+  dietMatch,
+  shuffleArray,
+  copyArray,
+  filterRecipesByMealType,
+  dayNames,
+  getExpiringItems,
+} = require("../utils/recipeUtils.js");
 
 const recipeRecommendation = async (
   ingredientType,
@@ -123,11 +132,11 @@ const recipeRecommendation = async (
     const expiringScore = expirationResult.score;
 
     const totalScore =
-      (dietScore * dietWeight) +
-      (mealPrepScore * mealPrepWeight) +
-      (macrosScore * macrosWeight) +
-      (cuisineScore * cuisineWeight) +
-      (expiringScore * expiringWeight);
+      dietScore * dietWeight +
+      mealPrepScore * mealPrepWeight +
+      macrosScore * macrosWeight +
+      cuisineScore * cuisineWeight +
+      expiringScore * expiringWeight;
 
     return {
       ...recipe,
@@ -171,37 +180,91 @@ const recipeRecommendation = async (
   }
 };
 
-// Helper to get expiring items
-const getExpiringItems = (inventory, daysUntilExpire) => {
-  return inventory
-    .filter(
-      (item) =>
-        getDaysUntilExpiration(item.expiration_date) <= daysUntilExpire &&
-        getDaysUntilExpiration(item.expiration_date) >= 0
-    )
-    .sort((a, b) => {
-      return (
-        getDaysUntilExpiration(a.expiration_date) -
-        getDaysUntilExpiration(b.expiration_date)
-      );
-    });
-};
+const generateWeekMealPlan = async (userFilters, userProfile, inventory) => {
+  try {
+    const masterRecipeResult = await recipeRecommendation(
+      userFilters.ingredientType || "partial",
+      userFilters,
+      userProfile,
+      inventory
+    );
+    if (
+      !masterRecipeResult ||
+      !masterRecipeResult.recipes ||
+      masterRecipeResult.recipes.length === 0
+    ) {
+      return {
+        weeklyPlan: [],
+        numFound: 0,
+        message: "No recipes could be found, please adjust your filters.",
+      };
+    }
 
-const dietMatch = (recipe, userDiet) => {
-  const diet = userDiet.toLowerCase();
-  if (diet === DIETS.VEGAN) {
-    return recipe.vegan;
+    const allRecipes = masterRecipeResult.recipes;
+
+    // Ensure each meal type has 7 recipes
+    const breakfastRecipes = filterRecipesByMealType(allRecipes, "breakfast");
+    const lunchRecipes = filterRecipesByMealType(allRecipes, "lunch");
+    const dinnerRecipes = filterRecipesByMealType(allRecipes, "dinner");
+
+    // Shuffle recipes according to Fisher-Yates
+    const shuffledBreakfast = shuffleArray(breakfastRecipes);
+    const shuffledLunch = shuffleArray(lunchRecipes);
+    const shuffledDinner = shuffleArray(dinnerRecipes);
+
+    // If we don't have 7 unique recipes, copy until we have 7
+    const breakfastWeek = copyArray(shuffledBreakfast, WEEK);
+    const lunchWeek = copyArray(shuffledLunch, WEEK);
+    const dinnerWeek = copyArray(shuffledDinner, WEEK);
+
+    // Create weekly meal plan by cycling through each group
+    const weeklyPlan = [];
+
+    for (let day = 0; day < WEEK; day++) {
+      const dailyPlan = {
+        day: day + 1,
+        dayName: dayNames[day],
+        meals: {
+          breakfast: breakfastWeek[day] || null,
+          lunch: lunchWeek[day] || null,
+          dinner: dinnerWeek[day] || null,
+        },
+      };
+
+      // If lunch and dinner are the same, swap dinner with next day
+      if (
+        dailyPlan.meals.lunch &&
+        dailyPlan.meals.dinner &&
+        dailyPlan.meals.lunch.id === dailyPlan.meals.dinner.id &&
+        day < WEEK - 1
+      ) {
+        [
+          dinnerWeek[day],
+          (dinnerWeek[day + 1] = [dinnerWeek[day + 1], dinnerWeek[day]]),
+        ];
+        dailyPlan.meals.dinner = dinnerWeek[day];
+      }
+      weeklyPlan.push(dailyPlan);
+    }
+    return {
+      weeklyPlan,
+      numFound: weeklyPlan.length,
+      breakfastCount: breakfastWeek.length,
+      lunchCount: lunchWeek.length,
+      dinnerCount: dinnerWeek.length,
+      message: `Generated ${weeklyPlan.length} days of meal plans`,
+    };
+  } catch (err) {
+    console.log("Error generating weekly meal plan: ", err);
+    return {
+      weeklyPlan: [],
+      numFound: 0,
+      breakfastCount: 0,
+      lunchCount: 0,
+      dinnerCount: 0,
+      message: `Failed to generate weekly meal plan`,
+    };
   }
-  if (diet === DIETS.VEGETARIAN) {
-    return recipe.vegetarian;
-  }
-  if (diet === DIETS.GLUTEN_FREE) {
-    return recipe.glutenFree;
-  }
-  if (diet === DIETS.KETOGENIC) {
-    return recipe.ketogenic;
-  }
-  return true;
 };
 
 const calculateDietScore = (recipe, userDiet) => {
@@ -338,4 +401,4 @@ const calculateExpiringScore = (recipe, expiringItems) => {
   return { score: priority, usedExpiringIngredients: usedExpiringIngredients };
 };
 
-module.exports = { recipeRecommendation };
+module.exports = { recipeRecommendation, generateWeekMealPlan };

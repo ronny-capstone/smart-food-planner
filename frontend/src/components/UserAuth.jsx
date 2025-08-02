@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../utils/api";
 import { AUTH_PATH, SIGNUP_PATH, LOGIN_PATH } from "../utils/paths";
 import { toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
 export default function UserAuth({ onAuth }) {
   const [username, setUsername] = useState("");
@@ -118,6 +119,14 @@ export default function UserAuth({ onAuth }) {
 
   return (
     <div>
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        limit={2}
+        toastStyle={{
+          "--toastify-color-progress-light": "#808080",
+        }}
+      />
       <h1>Smart Food Tracker</h1>
       <h3>Track your food, manage your kitchen</h3>
 

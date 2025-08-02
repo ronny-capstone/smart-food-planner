@@ -3,6 +3,7 @@ import LogForm from "./LogForm";
 import { API_BASE_URL } from "../utils/api";
 import { useEffect, useState } from "react";
 import { LOG_PATH, FOOD_PATH, AUTH_PATH } from "../utils/paths";
+import { TYPES } from "../utils/groceryConstants";
 
 export default function LogList({ currentUser }) {
   const [logs, setLogs] = useState([]);
@@ -78,7 +79,7 @@ export default function LogList({ currentUser }) {
   };
 
   const openAddModal = () => {
-    setActiveModal("add");
+    setActiveModal(TYPES.ADD);
     setLogToUpdate(null);
   };
 
@@ -106,14 +107,14 @@ export default function LogList({ currentUser }) {
   return (
     <div>
       <button onClick={openAddModal}>Add New Log</button>
-      {activeModal === "add" && (
+      {activeModal === TYPES.ADD && (
         <LogModal onClose={closeModal}>
           {" "}
           <LogForm
             handleLogAdded={handleLogAdded}
             handleLogUpdated={handleLogUpdated}
             setShowModal={closeModal}
-            type="add"
+            type={TYPES.ADD}
             logToUpdate={null}
             currentUser={currentUser}
           />{" "}
@@ -156,7 +157,7 @@ export default function LogList({ currentUser }) {
                       handleLogAdded={handleLogAdded}
                       handleLogUpdated={handleLogUpdated}
                       setShowModal={closeModal}
-                      type="update"
+                      type={TYPES.UPDATE}
                       logToUpdate={log}
                       currentUser={currentUser}
                     />{" "}

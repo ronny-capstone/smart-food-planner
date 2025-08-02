@@ -61,6 +61,8 @@ const MACRO_CONSTANTS = {
   INVALID: 0,
 };
 
+const WEEK = 7;
+
 module.exports = {
   PRIORITY_CONSTANTS,
   DIETS,
@@ -70,4 +72,5 @@ module.exports = {
   NUTRIENT_CONSTANTS,
   MACRO_CONSTANTS,
   PREP_BUCKETS,
+  WEEK,
 };

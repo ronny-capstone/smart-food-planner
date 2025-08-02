@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
 import { FOOD_PATH } from "../utils/paths";
 import { toast } from "react-toastify";
+import { TYPES } from "../utils/groceryConstants";
 
 export default function LogForm({
   handleLogAdded,
@@ -125,9 +126,9 @@ export default function LogForm({
       toast.error("Please enter a positive number for food item & servings.");
       return;
     }
-    if (type === "add") {
+    if (type === TYPES.ADD) {
       addLog();
-    } else if (type === "update") {
+    } else if (type === TYPES.UPDATE) {
       updateLog();
     }
   };
@@ -135,8 +136,8 @@ export default function LogForm({
   return (
     <form onSubmit={handleSubmit}>
       <div>
-        {type === "add" && <h1>Add New Log</h1>}
-        {type === "update" && <h1>Update Log</h1>}
+        {type === TYPES.ADD && <h1>Add New Log</h1>}
+        {type === TYPES.UPDATE && <h1>Update Log</h1>}
 
         <div>
           <label>Date logged (defaulted to today):</label>

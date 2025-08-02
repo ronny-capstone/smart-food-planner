@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../utils/api";
 import { GROCERY_PATH, FOOD_PATH } from "../utils/paths";
 import { toast } from "react-toastify";
+import { TYPES } from "../utils/groceryConstants";
 
 export default function GroceryForm({
   handleGroceryAdded,
@@ -30,7 +31,7 @@ export default function GroceryForm({
 
   // Prepopulate form fields for updates
   useEffect(() => {
-    if (type === "update" && groceryToUpdate) {
+    if (type === TYPES.UPDATE && groceryToUpdate) {
       setFoodItem(groceryToUpdate.item_id.toString());
       setQuantity(groceryToUpdate.quantity.toString());
     }
@@ -122,9 +123,9 @@ export default function GroceryForm({
       toast.error("Please select a food item and enter a positive quantity.");
       return;
     }
-    if (type === "add") {
+    if (type === TYPES.ADD) {
       addGrocery();
-    } else if (type === "update") {
+    } else if (type === TYPES.UPDATE) {
       updateGrocery();
     }
   };
@@ -132,8 +133,8 @@ export default function GroceryForm({
   return (
     <form onSubmit={handleSubmit}>
       <div>
-        {type === "add" && <h1>Add to Grocery List</h1>}
-        {type === "update" && <h1>Update Grocery Item</h1>}
+        {type === TYPES.ADD && <h1>Add to Grocery List</h1>}
+        {type === TYPES.UPDATE && <h1>Update Grocery Item</h1>}
 
         <div>
           <label>Food item:</label>
@@ -163,7 +164,7 @@ export default function GroceryForm({
 
         <div>
           <button type="submit">
-            {type === "add" ? "Add to grocery list" : "Update item"}
+            {type === TYPES.ADD ? "Add to grocery list" : "Update item"}
           </button>
         </div>
       </div>

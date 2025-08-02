@@ -6,6 +6,8 @@ import { listToString } from "../utils/listToString";
 import { capitalize, formatServings } from "../utils/stringUtils";
 import { toast } from "react-toastify";
 import { types } from "../utils/groceryConstants";
+import { useKeenSlider } from "keen-slider/react";
+import "keen-slider/keen-slider.min.css";
 
 export default function GroceryRecForm({ currentUser }) {
   const [form, setForm] = useState({
@@ -18,6 +20,18 @@ export default function GroceryRecForm({ currentUser }) {
     allowRepeats: false,
     maxRepeats: 1,
   });
+  const [sliderRef, instanceRef] = useKeenSlider({
+    slides: { perView: 1, spacing: 16 },
+    loop: true,
+  });
+
+  const prev = () => {
+    instanceRef.current?.prev();
+  };
+
+  const next = () => {
+    instanceRef.current?.next();
+  };
 
   // Fetch user's diet from profile
   useEffect(() => {
@@ -196,132 +210,167 @@ export default function GroceryRecForm({ currentUser }) {
       )}
 
       <div className="mb-1 w-full max-w-sm">
-        <button className="!bg-emerald-50" id="generateBtn" type="submit" onClick={handleSubmit}>
+        <button
+          className="!bg-emerald-50"
+          id="generateBtn"
+          type="submit"
+          onClick={handleSubmit}
+        >
           Generate Grocery List
         </button>
       </div>
 
       {form.result?.types && !form.noResults && (
         <div>
-          <h2>Grocery List Strategies</h2>
-          {[
-            "bestOverall",
-            "budgetMaximizer",
-            "inventoryMaximizer",
-            "complexityMaximizer",
-          ].map((type) => {
-            const groceryType = form.result.types[type];
-            if (!groceryType) {
-              return null;
-            }
-            const groceryList = groceryType.groceryList || {};
-            return (
-              <div key={type} className="mb-8 p-4 border rounded">
-                <h3 className="text-xl font-semibold text-gray-800 mb-1">
-                  {types[type].title}
-                </h3>
-                <p className="text-gray-600 mb-2">{types[type].text}</p>
-                <div className="grid grid-cols-2 gap-3 mb-3 p-4 bg-gray-50 rounded-lg">
-                  <div className="text-center">
-                    <p>
-                      Total cost: ${Number(groceryType.totalCost).toFixed(2)}{" "}
-                      out of ${form.budget} budget
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p>Budget Used: {groceryType.budgetUsed}%</p>
-                  </div>
-                  <div className="text-center">
-                    <p>Total meals: {groceryType.mealsCount} </p>
-                  </div>
-                  <div className="text-center">
-                    {groceryType.avgRecipeInventoryUsage !== undefined && (
+          <h2 className="text-xl mb-2">Grocery List Strategies</h2>
+          <div ref={sliderRef} className="keen-slider">
+            {[
+              "bestOverall",
+              "budgetMaximizer",
+              "inventoryMaximizer",
+              "complexityMaximizer",
+            ].map((type) => {
+              const groceryType = form.result.types[type];
+              if (!groceryType) {
+                return null;
+              }
+              const groceryList = groceryType.groceryList || {};
+              return (
+                <div
+                  key={type}
+                  className="keen-slider__slide mb-8 p-4 border rounded"
+                >
+                  <h3 className="text-xl font-semibold ${} text-gray-800 mb-1">
+                    {types[type].title}
+                  </h3>
+                  <p className={`${types[type].color} mb-2`}>
+                    {types[type].text}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 mb-3 p-4 bg-gray-50 rounded-lg">
+                    <div className="text-center">
                       <p>
-                        Avg. Ingredient Coverage:{" "}
-                        {Math.round(groceryType.avgRecipeInventoryUsage * 100)}%
+                        Total cost: ${Number(groceryType.totalCost).toFixed(2)}{" "}
+                        out of ${form.budget} budget
                       </p>
-                    )}
-                  </div>
-                </div>
-
-                {groceryType.recipes?.length > 0 && (
-                  <div>
-                    <h4 className="text-lg mb-1">Meal Plan:</h4>
-                    {groceryType.recipes.map((meal, index) => (
-                      <div key={index}>
+                    </div>
+                    <div className="text-center">
+                      <p>Budget Used: {groceryType.budgetUsed}%</p>
+                    </div>
+                    <div className="text-center">
+                      <p>Total meals: {groceryType.mealsCount} </p>
+                    </div>
+                    <div className="text-center">
+                      {groceryType.avgRecipeInventoryUsage !== undefined && (
                         <p>
-                          Meal {index + 1}: {meal.title}
-                          {meal.repeatNumber && meal.repeatNumber > 1 && (
-                            <span> (#{meal.repeatNumber})</span>
+                          Avg. Ingredient Coverage:{" "}
+                          {Math.round(
+                            groceryType.avgRecipeInventoryUsage * 100
                           )}
+                          %
                         </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {groceryList.shoppingList?.length > 0 ? (
-                  <div>
-                    <h4 className="text-lg mt-1 mb-1">Shopping List:</h4>
-                    <p className="font-semibold">
-                      Items to buy ({groceryList.itemsNeeded}){" "}
-                    </p>
-                    <div>
-                      {groceryList.shoppingList
-                        .sort((a, b) => a.name.localeCompare(b.name))
-                        .map((item, index) => (
-                          <div key={index}>
-                            <p>
-                              {capitalize(item.name)} -{" "}
-                              {formatServings(item.servingsNeeded)}
-                            </p>
-                          </div>
-                        ))}
+                      )}
                     </div>
                   </div>
-                ) : (
-                  <p>No items needed - you have everything!</p>
-                )}
-                {groceryList?.inventoryRecommendations?.length > 0 && (
-                  <div>
-                    <p className="text-lg mt-2 mb-2">
-                      While you're at the store, you may want to buy:{" "}
-                    </p>
-                    {groceryList.inventoryRecommendations.map((item, index) => (
-                      <div
-                        key={index}
-                        className={`border p-3 rounded ${
-                          item.type === "expiring-replacement"
-                            ? "bg-orange-50 border-orange-200"
-                            : "bg-yellow-50 border-yellow-200"
-                        }`}
-                      >
-                        <p>
-                          {capitalize(item.name)}: {item.reason.toLowerCase()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
 
-                <div>
-                  <button
-                    className="!bg-indigo-400 hover:!bg-indigo-500 !text-white !px-4 !py-2 !mt-3 !rounded-lg"
-                    onClick={() =>
-                      handleExport(
-                        listToString(
-                          groceryList.shoppingList,
-                          groceryList.inventoryRecommendations
+                  {groceryType.recipes?.length > 0 && (
+                    <div>
+                      <h4 className="text-xl mb-1">Meal Plan:</h4>
+                      {groceryType.recipes.map((meal, index) => (
+                        <div key={index}>
+                          <p>
+                            Meal {index + 1}: {meal.title}
+                            {meal.repeatNumber && meal.repeatNumber > 1 && (
+                              <span> (#{meal.repeatNumber})</span>
+                            )}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {groceryList.shoppingList?.length > 0 ? (
+                    <div>
+                      <h4 className="text-xl mt-1 mb-1">Shopping List:</h4>
+                      <p className="font-semibold text-lg">
+                        Items to buy ({groceryList.itemsNeeded}){" "}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4 mb-6">
+                        {groceryList.shoppingList
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map((item, index) => (
+                            <div
+                              key={index}
+                              className="bg-white border border-gray-200 rounded-lg p-2 hover:shadow-sm"
+                            >
+                              <p>
+                                {capitalize(item.name)} -{" "}
+                                {formatServings(item.servingsNeeded)}
+                              </p>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p>No items needed - you have everything!</p>
+                  )}
+                  {groceryList?.inventoryRecommendations?.length > 0 && (
+                    <div>
+                      <p className="text-lg mt-2 mb-2">
+                        While you're at the store, you may want to buy:{" "}
+                      </p>
+                      {groceryList.inventoryRecommendations.map(
+                        (item, index) => (
+                          <div
+                            key={index}
+                            className={`border p-2 rounded ${
+                              item.type === "expiring-replacement"
+                                ? "bg-orange-50 border-orange-200 w-2/3 mx-auto"
+                                : "bg-yellow-50 border-yellow-200 w-2/3 mx-auto"
+                            }`}
+                          >
+                            <p>
+                              {capitalize(item.name)}:{" "}
+                              {item.reason.toLowerCase()}
+                            </p>
+                          </div>
                         )
-                      )
-                    }
-                  >
-                    Export grocery list
-                  </button>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <button
+                      className="!bg-indigo-400 hover:!bg-indigo-500 !text-white !px-4 !py-2 !mt-3 !rounded-lg"
+                      onClick={() =>
+                        handleExport(
+                          listToString(
+                            groceryList.shoppingList,
+                            groceryList.inventoryRecommendations
+                          )
+                        )
+                      }
+                    >
+                      Export grocery list
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+            <button
+              onClick={prev}
+              className="absolute left-0 top-1/3 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow"
+              aria-label="Previous"
+            >
+              ←
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-0 top-1/3 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow"
+              aria-label="Next"
+            >
+              →
+            </button>
+          </div>
         </div>
       )}
 
