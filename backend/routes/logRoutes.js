@@ -67,9 +67,15 @@ logRoutes.get("/:id", async (req, res) => {
 // Get all today's log entries for a user
 logRoutes.get("/:id/today", async (req, res) => {
   const { id } = req.params;
+  const today = new Date();
+  const localDate = new Date(
+    today.getTime() - today.getTimezoneOffset() * 60000
+  )
+    .toISOString()
+    .split("T")[0];
   db.all(
     "SELECT * FROM consumption_logs WHERE user_id = ? AND date_logged = ?",
-    [id, new Date().toISOString().split("T")[0]],
+    [id, localDate],
     async (err, rows) => {
       if (err) {
         return res

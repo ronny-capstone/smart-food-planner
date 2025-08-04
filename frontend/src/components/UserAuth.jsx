@@ -41,7 +41,7 @@ export default function UserAuth({ onAuth }) {
   const handleSubmit = (e) => {
     // Stops browser from refreshing
     e.preventDefault();
-    if (username === "" || password === "") {
+    if (!username || !password) {
       toast.error("Please fill out all fields: username and password");
       return;
     }
@@ -113,6 +113,7 @@ export default function UserAuth({ onAuth }) {
 
   // Toggle whether user is signing up or logging in
   const toggleMode = () => {
+    toast.dismiss();
     setIsSignUp(!isSignUp);
     setPassword("");
   };
@@ -186,6 +187,7 @@ export default function UserAuth({ onAuth }) {
               {isSignUp ? "Already have an account?" : "Don't have an account?"}
             </span>
             <button
+              type="button"
               onClick={toggleMode}
               className="ml-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
             >

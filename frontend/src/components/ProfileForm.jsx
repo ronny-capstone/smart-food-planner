@@ -3,6 +3,7 @@ import { API_BASE_URL } from "../utils/api";
 import { PROFILE_PATH } from "../utils/paths";
 import { checkInvalidVariable } from "../utils/invalidVars";
 import { toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
 export default function ProfileForm({ profileSubmit, currentUser }) {
   // Determines if user is updating an existing profile or creating new one
@@ -84,57 +85,63 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
       : `${API_BASE_URL}${PROFILE_PATH}`;
     const method = isUpdating ? "PATCH" : "POST";
 
-    // Make API request to create or update profile
-    const response = await fetch(endpoint, {
-      method: method,
-
-      body: JSON.stringify({
-        id: currentUser,
-        health_goal: healthGoal,
-        dietary_preferences: dietaryPreferences,
-        age: parseInt(age),
-        weight_kg: parseInt(weightKg),
-        height_feet: parseInt(heightFeet),
-        height_inches: parseInt(heightInches),
-        gender: gender,
-        activity: activityLevel,
-      }),
-      headers: { "Content-type": "application/json" },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Server error");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("profile update response:", data);
-        // Reset form
-        if (!isUpdating) {
-          setHeightFeet("");
-          setHeightInches("");
-          setWeight("");
-          setAge("");
-          setGender("");
-          setActivityLevel("");
-          setHealthGoal("");
-          setDietaryPreferences("");
-        }
-        toast.success(
-          `Profile ${isUpdating ? "updated" : "created"} successfully`
-        );
-        if (profileSubmit) {
-          profileSubmit();
-        }
-      })
-      .catch((err) => {
-        console.error("Profile update error", err);
-        toast.error(`Failed to ${isUpdating ? "update" : "create"} profile`);
+    try {
+      // Make API request to create or update profile
+      const response = await fetch(endpoint, {
+        method: method,
+        body: JSON.stringify({
+          id: currentUser,
+          health_goal: healthGoal,
+          dietary_preferences: dietaryPreferences,
+          age: parseInt(age),
+          weight_kg: parseInt(weightKg),
+          height_feet: parseInt(heightFeet),
+          height_inches: parseInt(heightInches),
+          gender: gender,
+          activity: activityLevel,
+        }),
+        headers: { "Content-type": "application/json" },
       });
+
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
+
+      const data = await response.json();
+
+      // Reset form
+      if (!isUpdating) {
+        setHeightFeet("");
+        setHeightInches("");
+        setWeight("");
+        setAge("");
+        setGender("");
+        setActivityLevel("");
+        setHealthGoal("");
+        setDietaryPreferences("");
+      }
+
+      toast.success(
+        `Profile ${isUpdating ? "updated" : "created"} successfully`
+      );
+
+      if (profileSubmit) {
+        profileSubmit();
+      }
+    } catch (err) {
+      console.error("Profile update error", err);
+      toast.error(`Failed to ${isUpdating ? "update" : "create"} profile`);
+    }
   };
 
   return (
     <div className="max-w-md mx-auto">
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        limit={2}
+        toastStyle={{ "--toastify-color-progress-light": "#808080" }}
+      />
       <form onSubmit={handleSubmit}>
         <div className="text-center mb-6">
           <h1 className="font-semibold text-gray-900 mb-2">
@@ -265,9 +272,9 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value=""> Select health goal </option>
-            <option value={"Lose Weight"}>Lose weight</option>
-            <option value={"Gain Weight"}>Gain weight</option>
-            <option value={"Maintain Weight"}>Maintain weight</option>
+            <option value={"Lose weight"}>Lose weight</option>
+            <option value={"Gain weight"}>Gain weight</option>
+            <option value={"Maintain weight"}>Maintain weight</option>
           </select>
         </div>
 

@@ -141,7 +141,6 @@ profileRoutes.post("/", (req, res) => {
     height_inches
   );
   const macroTargets = calculateMacroTargets(tdee, health_goal);
-
   // Check if user's profile already exists
   try {
     db.get(

@@ -17,6 +17,7 @@ import { getDaysUntilExpiration } from "./utils/dateUtils";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   // User id for logged in user
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState("kitchen");
@@ -140,11 +141,18 @@ function App() {
   };
 
   const handleAuth = (isNewUser = false) => {
-    setIsAuthenticated(true);
-    if (isNewUser) {
-      setActiveTab("profile");
-    }
-    fetchCurrentUser();
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setIsAuthenticated(true);
+      setIsAuthenticated(true);
+      if (isNewUser) {
+        setActiveTab("profile");
+      }
+      fetchCurrentUser();
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 50);
+    }, 300);
   };
 
   const tabs = [
@@ -228,19 +236,22 @@ function App() {
 
   return (
     <>
-      <div>
-        <ToastContainer
-          position="top-center"
-          autoClose={2000}
-          limit={2}
-          toastStyle={{ "--toastify-color-progress-light": "#808080" }}
-        />
+      <div
+        className="app-container"
+        style={{ opacity: isTransitioning ? 0 : 1 }}
+      >
         {/* If user is authenticated show main app, else login form */}
         {!isAuthenticated ? (
           <UserAuth onAuth={handleAuth} />
         ) : (
           <>
             <div className="min-h-screen bg-gray-50">
+              <ToastContainer
+                position="top-center"
+                autoClose={2000}
+                limit={2}
+                toastStyle={{ "--toastify-color-progress-light": "#808080" }}
+              />
               <div className="max-w-4xl mx-auto p-6">
                 <div className="text-center mb-8">
                   <div className="w-16 h-16 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center">
