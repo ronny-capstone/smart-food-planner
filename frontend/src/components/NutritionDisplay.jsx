@@ -157,10 +157,18 @@ export default function NutritionDisplay({ currentUser }) {
     daily_carbs,
     daily_fats
   ) => {
-    const percentCalories = ((daily_calories / calorieGoal) * 100).toFixed(1);
-    const percentProtein = ((daily_protein / proteinGoal) * 100).toFixed(1);
-    const percentCarbs = ((daily_carbs / carbGoal) * 100).toFixed(1);
-    const percentFats = ((daily_fats / fatsGoal) * 100).toFixed(1);
+    const percentCalories =
+      calorieGoal > 0
+        ? ((daily_calories / calorieGoal) * 100).toFixed(1)
+        : "0.0";
+    const percentProtein =
+      proteinGoal > 0
+        ? ((daily_protein / proteinGoal) * 100).toFixed(1)
+        : "0.0";
+    const percentCarbs =
+      carbGoal > 0 ? ((daily_carbs / carbGoal) * 100).toFixed(1) : "0.0";
+    const percentFats =
+      fatsGoal > 0 ? ((daily_fats / fatsGoal) * 100).toFixed(1) : "0.0";
 
     return { percentCalories, percentProtein, percentCarbs, percentFats };
   };
@@ -188,7 +196,7 @@ export default function NutritionDisplay({ currentUser }) {
           "--toastify-color-progress-light": "#808080",
         }}
       />
-      <h1>Nutritional Targets</h1>
+      <h1 className="font-semibold ">Nutritional Targets</h1>
 
       <h3 className="text-2xl font-medium underline text-gray-700 pt-2 pb-2">
         Daily Values:
@@ -260,12 +268,12 @@ export default function NutritionDisplay({ currentUser }) {
         </div>
       </div>
 
-      <h3> Nutrition Info: </h3>
+      <h3 className="text-xl mt-2 mb-2"> Nutrition Info: </h3>
 
       <div>
         <p className="text-lg text-gray-600">BMR (Base Metabolic Rate)</p>
         <p>Minimum calories your body needs to function</p>
-        <p>{bmr}</p>
+        <p>{bmr.toFixed(2)}</p>
       </div>
 
       <div>
@@ -273,7 +281,7 @@ export default function NutritionDisplay({ currentUser }) {
           TDEE (Total Daily Energy Expenditure)
         </p>
         <p>Total number of calories you body burns in a day</p>
-        <p>{tdee}</p>
+        <p>{tdee.toFixed(2)}</p>
       </div>
 
       <script></script>

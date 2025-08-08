@@ -143,6 +143,7 @@ export default function GroceryForm({
             name="foodItem"
             value={foodItem}
             onChange={(e) => setFoodItem(e.target.value)}
+            className="ml-2 mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value=""> Select a food item </option>
             {foodItems.map((item) => (
@@ -155,6 +156,7 @@ export default function GroceryForm({
         <div>
           <label>Quantity:</label>
           <input
+            className="ml-2 mt-2 mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             name="quantity"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}

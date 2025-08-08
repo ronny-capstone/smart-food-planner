@@ -3,6 +3,7 @@ import { API_BASE_URL } from "../utils/api";
 import { PROFILE_PATH } from "../utils/paths";
 import { checkInvalidVariable } from "../utils/invalidVars";
 import { toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
 export default function ProfileForm({ profileSubmit, currentUser }) {
   // Determines if user is updating an existing profile or creating new one
@@ -58,7 +59,7 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
     // Run this whenever currentUser changes
   }, [currentUser]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     // Stops page from refreshing
     e.preventDefault();
     if (!currentUser) {
@@ -86,7 +87,7 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
 
     try {
       // Make API request to create or update profile
-      fetch(endpoint, {
+      const response = await fetch(endpoint, {
         method: method,
         body: JSON.stringify({
           id: currentUser,
@@ -100,81 +101,114 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           activity: activityLevel,
         }),
         headers: { "Content-type": "application/json" },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          // Reset form
-          setHeightFeet("");
-          setHeightInches("");
-          setWeight("");
-          setAge("");
-          setGender("");
-          setActivityLevel("");
-          setHealthGoal("");
-          setDietaryPreferences("");
-          toast.success(
-            `Profile ${isUpdating ? "updated" : "created"} successfully`
-          );
+      });
 
-          if (profileSubmit) {
-            profileSubmit();
-          }
-        })
-        .catch((err) => {
-          toast.error(`Failed to ${isUpdating ? "update" : "create"} profile`);
-        });
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
+
+      const data = await response.json();
+
+      // Reset form
+      if (!isUpdating) {
+        setHeightFeet("");
+        setHeightInches("");
+        setWeight("");
+        setAge("");
+        setGender("");
+        setActivityLevel("");
+        setHealthGoal("");
+        setDietaryPreferences("");
+      }
+
+      toast.success(
+        `Profile ${isUpdating ? "updated" : "created"} successfully`
+      );
+
+      if (profileSubmit) {
+        profileSubmit();
+      }
     } catch (err) {
+      console.error("Profile update error", err);
       toast.error(`Failed to ${isUpdating ? "update" : "create"} profile`);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="m-2">
-        {isUpdating ? <h1> Update Profile</h1> : <h1> Create Profile</h1>}
-
-        <div className="m-2">
-          <p className="text-lg text-gray-600"> Height</p>
-          <input
-            type="text"
-            value={heightFeet}
-            placeholder={"Feet"}
-            onChange={(e) => setHeightFeet(e.target.value)}
-          />
-          <input
-            type="text"
-            value={heightInches}
-            placeholder={"Inches"}
-            onChange={(e) => setHeightInches(e.target.value)}
-          />
+    <div className="max-w-md mx-auto">
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        limit={2}
+        toastStyle={{ "--toastify-color-progress-light": "#808080" }}
+      />
+      <form onSubmit={handleSubmit}>
+        <div className="text-center mb-6">
+          <h1 className="font-semibold text-gray-900 mb-2">
+            {isUpdating ? "Update Profile" : "Create Profile"}
+          </h1>
+          <p className="text-gray-600">
+            {" "}
+            {isUpdating ? "Update your information" : "Tell us about yourself"}
+          </p>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Height
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="text"
+                value={heightFeet}
+                placeholder="Feet"
+                onChange={(e) => setHeightFeet(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <input
+                type="text"
+                value={heightInches}
+                placeholder="Inches"
+                onChange={(e) => setHeightInches(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Weight (kg)
+            </label>
+            <input
+              type="text"
+              value={weightKg}
+              placeholder={"Weight in kilograms"}
+              onChange={(e) => setWeight(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Age
+            </label>
+            <input
+              type="text"
+              value={age}
+              placeholder={"Age"}
+              onChange={(e) => setAge(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
         </div>
 
-        <div className="m-2">
-          <p className="text-lg text-gray-600"> Weight</p>
-          <input
-            type="text"
-            value={weightKg}
-            placeholder={"Weight in kilograms"}
-            onChange={(e) => setWeight(e.target.value)}
-          />
-        </div>
-
-        <div className="m-2">
-          <p className="text-lg text-gray-600"> Age</p>
-          <input
-            type="text"
-            value={age}
-            placeholder={"Age"}
-            onChange={(e) => setAge(e.target.value)}
-          />
-        </div>
-
-        <div className="m-2">
-          <p className="text-lg text-gray-600"> Gender</p>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Gender
+          </label>
           <select
             name="gender"
             value={gender}
             onChange={(e) => setGender(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value=""> Select gender </option>
 
@@ -183,12 +217,15 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           </select>
         </div>
 
-        <div className="m-3">
-          <p className="text-lg text-gray-600"> Activity Level</p>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Activity Level
+          </label>
           <select
             name="activityLevel"
             value={activityLevel}
             onChange={(e) => setActivityLevel(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value=""> Select activity Level </option>
 
@@ -204,12 +241,15 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           </select>
         </div>
 
-        <div className="m-2">
-          <p className="text-lg text-gray-600"> Dietary Preferences</p>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Dietary Preferences
+          </label>
           <select
             name="dietaryPreference"
             value={dietaryPreferences}
             onChange={(e) => setDietaryPreferences(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value=""> Select dietary preference </option>
             <option value={"None"}>None</option>
@@ -220,42 +260,43 @@ export default function ProfileForm({ profileSubmit, currentUser }) {
           </select>
         </div>
 
-        <div className="m-2">
-          <p className="text-lg text-gray-600"> Health Goal</p>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Health Goal
+          </label>
 
           <select
             name="healthGoal"
             value={healthGoal}
             onChange={(e) => setHealthGoal(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value=""> Select health goal </option>
-            <option value={"Lose Weight"}>Lose weight</option>
-            <option value={"Gain Weight"}>Gain weight</option>
-            <option value={"Maintain Weight"}>Maintain weight</option>
+            <option value={"Lose weight"}>Lose weight</option>
+            <option value={"Gain weight"}>Gain weight</option>
+            <option value={"Maintain weight"}>Maintain weight</option>
           </select>
         </div>
 
-        <div className="mb-1 w-full max-w-sm">
-          {isUpdating ? (
-            <button
-              className="!bg-emerald-50"
-              id="editBtn"
-              type="submit"
-              onClick={handleSubmit}
-            >
-              Update Profile
-            </button>
-          ) : (
-            <button
-              className="!bg-emerald-50"
-              type="submit"
-              onClick={handleSubmit}
-            >
-              Create Profile
-            </button>
-          )}
-        </div>
-      </div>
-    </form>
+        {isUpdating ? (
+          <button
+            type="submit"
+            id="editBtn"
+            onClick={handleSubmit}
+            className="w-full !bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 mt-4 rounded-lg"
+          >
+            Update Profile
+          </button>
+        ) : (
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="w-full !bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 mt-4 rounded-lg"
+          >
+            Create Profile
+          </button>
+        )}
+      </form>
+    </div>
   );
 }

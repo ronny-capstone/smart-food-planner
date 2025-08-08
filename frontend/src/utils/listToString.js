@@ -4,13 +4,7 @@ export const listToString = (listObject, optionalListObject) => {
   groceryString += "-------------------------" + "\n";
   listObject.forEach((item) => {
     let itemString =
-      item.name +
-      " - $" +
-      item.itemCost +
-      ", quantity: " +
-      item.quantity +
-      " " +
-      item.unit;
+      item.name + " - $" + item.itemCost + ", quantity: " + item.quantity + " servings";
     groceryString += itemString + "\n";
   });
 

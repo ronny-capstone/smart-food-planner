@@ -4,6 +4,7 @@ import {
   getExpirationStatus,
   formatDay,
 } from "../utils/dateUtils";
+import { capitalize } from "../utils/stringUtils";
 
 export default function InventoryCard({ item, handleEdit, handleDelete }) {
   const expirationStatus = getExpirationStatus(item.expiration_date);
@@ -36,7 +37,7 @@ export default function InventoryCard({ item, handleEdit, handleDelete }) {
 
   return (
     <div className="itemCard">
-      <h3 className="item-name">{item.name}</h3>
+      <h3 className="item-name">{capitalize(item.name)}</h3>
       <p className={getStatusColor(expirationStatus)}> {getStatusMessage()} </p>
       <p>Expires: {formatDateString(item.expiration_date)}</p>
       <p>Servings: {item.quantity}</p>
